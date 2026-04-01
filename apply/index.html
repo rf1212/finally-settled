@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Start Your Pre-Approval | Finally Settled</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: #222;
+  background: #FFFFFF;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+a { text-decoration: none; color: inherit; }
+ul { list-style: none; }
+.container { width: 100%; max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+.btn {
+  display: inline-block;
+  padding: 14px 28px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+  border: 2px solid transparent;
+  text-align: center;
+}
+.btn-primary { background: #1a4731; color: #fff; border-color: #1a4731; }
+.btn-primary:hover { background: #0f2a1d; border-color: #0f2a1d; }
+.nav {
+  background: #fff;
+  border-bottom: 1px solid #e5e5e5;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.nav-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+.nav-brand { font-size: 1.25rem; font-weight: 800; color: #1a4731; }
+.nav-links { display: flex; align-items: center; gap: 28px; }
+.nav-links a { font-size: 0.95rem; font-weight: 500; color: #444; transition: color 0.2s; }
+.nav-links a:hover { color: #1a4731; }
+.nav-cta .btn { padding: 10px 20px; font-size: 0.9rem; }
+.nav-sub {
+  background: #f5f5f5;
+  text-align: center;
+  padding: 8px 20px;
+  font-size: 0.85rem;
+  color: #555;
+  font-weight: 500;
+}
+.nav-hamburger {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+}
+.nav-hamburger span { display: block; width: 24px; height: 2px; background: #333; }
+.mobile-menu {
+  display: none;
+  flex-direction: column;
+  background: #fff;
+  border-top: 1px solid #e5e5e5;
+  padding: 16px 20px;
+  gap: 12px;
+}
+.mobile-menu a { font-size: 1rem; font-weight: 500; color: #444; padding: 8px 0; }
+.mobile-menu .btn { text-align: center; margin-top: 8px; }
+.mobile-menu.open { display: flex; }
+@media (max-width: 768px) {
+  .nav-links { display: none; }
+  .nav-cta { display: none; }
+  .nav-hamburger { display: flex; }
+}
+.page-content {
+  padding: 80px 0;
+  text-align: center;
+  min-height: 50vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.page-content h1 {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: #1a4731;
+  margin-bottom: 16px;
+}
+.page-content p {
+  font-size: 1.1rem;
+  color: #555;
+}
+.footer {
+  background: #111111;
+  color: #fff;
+  padding: 48px 0 32px;
+}
+.footer-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+.footer-brand { font-size: 1.15rem; font-weight: 800; }
+.footer-socials { display: flex; gap: 16px; }
+.footer-socials a { color: rgba(255,255,255,0.7); transition: color 0.2s; }
+.footer-socials a:hover { color: #fff; }
+.footer-socials svg { width: 22px; height: 22px; }
+.footer-divider { border: none; border-top: 1px solid rgba(255,255,255,0.15); margin-bottom: 24px; }
+.footer-commitment { margin-bottom: 24px; }
+.footer-commitment h4 { font-size: 0.9rem; font-weight: 700; margin-bottom: 8px; color: rgba(255,255,255,0.9); }
+.footer-commitment p { font-size: 0.85rem; line-height: 1.7; color: rgba(255,255,255,0.6); }
+.footer-legal { font-size: 0.8rem; line-height: 1.7; color: rgba(255,255,255,0.45); margin-bottom: 24px; }
+.footer-bottom { font-size: 0.8rem; color: rgba(255,255,255,0.5); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+</style>
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="/" class="nav-brand">Finally Settled</a>
+    <div class="nav-links">
+      <a href="/request-showing">Request Showing</a>
+      <a href="/agents">Partner Agents</a>
+      <a href="/blog">Blog</a>
+    </div>
+    <div class="nav-cta">
+      <a href="/apply" class="btn btn-primary">Start Pre-Approval</a>
+    </div>
+    <button class="nav-hamburger" aria-label="Menu" onclick="toggleMobileMenu()">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="/request-showing">Request Showing</a>
+    <a href="/agents">Partner Agents</a>
+    <a href="/blog">Blog</a>
+    <a href="/apply" class="btn btn-primary">Start Pre-Approval</a>
+  </div>
+  <div class="nav-sub">Built on experience helping 500+ homebuyers</div>
+</nav>
+<main class="page-content">
+  <div class="container">
+    <h1>Start Your Pre-Approval</h1>
+    <p>This page is coming soon.</p>
+  </div>
+</main>
+<footer class="footer">
+  <div class="container">
+    <div class="footer-top">
+      <div class="footer-brand">Finally Settled</div>
+      <div class="footer-socials">
+        <a href="https://www.facebook.com/finallysettled" target="_blank" rel="noopener" aria-label="Facebook"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg></a>
+        <a href="https://twitter.com/finallysettled" target="_blank" rel="noopener" aria-label="Twitter / X"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a>
+        <a href="https://www.instagram.com/finallysettled" target="_blank" rel="noopener" aria-label="Instagram"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg></a>
+      </div>
+    </div>
+    <hr class="footer-divider">
+    <div class="footer-commitment">
+      <h4>Our Commitment</h4>
+      <p>At Finally Settled, we believe everyone deserves a fair shot at homeownership &mdash; regardless of credit score or past hardships. We're committed to operating with honesty, transparency, and compassion, providing clear terms, fair pricing, and realistic pathways to ownership. Every applicant is treated with respect, every contract is written in plain English, and every home is offered with the goal of helping our buyers build long-term stability and pride of ownership.</p>
+    </div>
+    <p class="footer-legal">Finally Settled is not a bank, mortgage company, or traditional lender. All homes are made available through Owner Financing, Lease-Option, or Bond-for-Title agreements in accordance with applicable state laws. Finally Settled does not provide mortgage loans, credit repair services, or legal advice. All financial and legal obligations between buyer and seller are documented in writing before move-in. Buyers are encouraged to review all contracts with an independent real estate attorney or advisor before signing. Approval is not guaranteed, and all applicants must demonstrate the ability to make consistent monthly payments.</p>
+    <div class="footer-bottom">
+      <span>Equal Housing Opportunity</span>
+      <span>Finally Settled &copy; 2025</span>
+    </div>
+  </div>
+</footer>
+<script>
+function toggleMobileMenu() {
+  document.getElementById('mobileMenu').classList.toggle('open');
+}
+</script>
+</body>
+</html>
