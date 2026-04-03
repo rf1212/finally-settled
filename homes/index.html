@@ -1,0 +1,1428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find Your Home | Finally Settled</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            color: #1c1c1e;
+            background-color: #fafaf8;
+            line-height: 1.6;
+        }
+
+        /* HEADER */
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background: white;
+            border-bottom: 1px solid #e5e5e3;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .header-container {
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: 1rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1a4731;
+            text-decoration: none;
+            font-family: 'Playfair Display', serif;
+            letter-spacing: -0.5px;
+        }
+
+        .logo:hover {
+            opacity: 0.8;
+        }
+
+        nav {
+            display: none;
+            gap: 2rem;
+            align-items: center;
+            flex: 1;
+            margin-left: 4rem;
+        }
+
+        nav.active {
+            display: flex;
+        }
+
+        nav a {
+            color: #1c1c1e;
+            text-decoration: none;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        nav a:hover,
+        nav a.active {
+            color: #1a4731;
+        }
+
+        .cta-apply {
+            background-color: #1a4731;
+            color: white;
+            padding: 0.65rem 1.5rem;
+            border-radius: 4px;
+            text-decoration: none;
+            font-size: 0.95rem;
+            font-weight: 600;
+            transition: opacity 0.2s;
+            border: none;
+            cursor: pointer;
+            display: inline-block;
+        }
+
+        .cta-apply:hover {
+            opacity: 0.85;
+        }
+
+        .menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #1c1c1e;
+        }
+
+        @media (max-width: 768px) {
+            .header-container {
+                padding: 1rem;
+            }
+
+            nav {
+                display: none !important;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                flex-direction: column;
+                background: white;
+                padding: 2rem;
+                border-bottom: 1px solid #e5e5e3;
+                gap: 1rem;
+                width: 100%;
+            }
+
+            nav.active {
+                display: flex !important;
+            }
+
+            .menu-toggle {
+                display: block;
+            }
+
+            .logo {
+                font-size: 1.25rem;
+            }
+        }
+
+        /* HERO STRIP */
+        .hero {
+            background: linear-gradient(135deg, #1a4731 0%, #0f2e1f 100%);
+            color: white;
+            padding: 4rem 2rem;
+            text-align: center;
+        }
+
+        .hero-container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .hero h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            line-height: 1.2;
+        }
+
+        .hero-subhead {
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+            opacity: 0.95;
+            line-height: 1.5;
+        }
+
+        .stat-pills {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .stat-pill {
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 0.75rem 1.25rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 1.8rem;
+            }
+
+            .hero-subhead {
+                font-size: 0.95rem;
+            }
+
+            .hero {
+                padding: 3rem 1.5rem;
+            }
+        }
+
+        /* FILTER BAR */
+        .filter-bar {
+            position: sticky;
+            top: 69px;
+            z-index: 900;
+            background: white;
+            border-bottom: 1px solid #e5e5e3;
+            padding: 1rem 2rem;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .filter-bar::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .filter-bar::-webkit-scrollbar-track {
+            background: #f0f0ee;
+        }
+
+        .filter-bar::-webkit-scrollbar-thumb {
+            background: #c9a84c;
+            border-radius: 3px;
+        }
+
+        .filter-controls {
+            max-width: 1440px;
+            margin: 0 auto;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            white-space: nowrap;
+            min-width: 100%;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .filter-btn,
+        .filter-dropdown,
+        .sort-dropdown {
+            background: white;
+            border: 1px solid #d0d0cc;
+            padding: 0.6rem 1rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #1c1c1e;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'DM Sans', sans-serif;
+        }
+
+        .filter-btn:hover {
+            border-color: #1a4731;
+            background: #f9f9f7;
+        }
+
+        .filter-btn.active {
+            background: #1a4731;
+            color: white;
+            border-color: #1a4731;
+        }
+
+        .filter-dropdown,
+        .sort-dropdown {
+            appearance: none;
+            padding-right: 2rem;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%231c1c1e' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.75rem center;
+            background-color: white;
+        }
+
+        .filter-dropdown:hover,
+        .sort-dropdown:hover {
+            border-color: #1a4731;
+            background-color: #f9f9f7;
+        }
+
+        .clear-filters {
+            background: #f0f0ee;
+            color: #1c1c1e;
+            border: 1px solid #d0d0cc;
+            padding: 0.6rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-left: auto;
+            font-family: 'DM Sans', sans-serif;
+            white-space: nowrap;
+        }
+
+        .clear-filters:hover {
+            background: #e5e5e3;
+        }
+
+        .clear-filters.hidden {
+            display: none;
+        }
+
+        .sort-wrapper {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            white-space: nowrap;
+        }
+
+        @media (max-width: 768px) {
+            .filter-bar {
+                top: 57px;
+                padding: 0.75rem 1rem;
+            }
+
+            .filter-controls {
+                gap: 0.5rem;
+            }
+
+            .filter-btn,
+            .filter-dropdown,
+            .sort-dropdown,
+            .clear-filters {
+                padding: 0.5rem 0.75rem;
+                font-size: 0.85rem;
+            }
+
+            .sort-wrapper {
+                gap: 0.25rem;
+            }
+        }
+
+        /* MORE FILTERS PANEL */
+        .more-filters-panel {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border-bottom: 1px solid #e5e5e3;
+            padding: 2rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            z-index: 800;
+        }
+
+        .more-filters-panel.active {
+            display: block;
+        }
+
+        .filter-section {
+            margin-bottom: 2rem;
+        }
+
+        .filter-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .filter-label {
+            font-weight: 600;
+            font-size: 0.95rem;
+            margin-bottom: 1rem;
+            color: #1c1c1e;
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        input[type="range"] {
+            flex: 1;
+            height: 6px;
+            border-radius: 3px;
+            background: #d0d0cc;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #1a4731;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #1a4731;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+        }
+
+        .slider-value {
+            font-weight: 600;
+            color: #1a4731;
+            min-width: 60px;
+            text-align: right;
+        }
+
+        .max-payment-input {
+            width: 150px;
+            padding: 0.6rem 0.8rem;
+            border: 1px solid #d0d0cc;
+            border-radius: 6px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.95rem;
+        }
+
+        .max-payment-input:focus {
+            outline: none;
+            border-color: #1a4731;
+            box-shadow: 0 0 0 2px rgba(26, 71, 49, 0.1);
+        }
+
+        /* RESULTS SECTION */
+        .results-header {
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .results-count {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .sort-label {
+            font-size: 0.9rem;
+            color: #666;
+            margin-right: 0.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .results-header {
+                padding: 1.5rem 1rem;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+        }
+
+        /* LISTINGS GRID */
+        .listings-container {
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: 0 2rem 4rem;
+        }
+
+        .listings-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+        }
+
+        @media (max-width: 1023px) {
+            .listings-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1.5rem;
+            }
+        }
+
+        @media (max-width: 767px) {
+            .listings-grid {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+
+            .listings-container {
+                padding: 0 1rem 3rem;
+            }
+        }
+
+        /* LISTING CARD */
+        .listing-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            animation: cardFadeIn 0.6s ease-out both;
+        }
+
+        .listing-card:hover {
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+            transform: translateY(-4px);
+        }
+
+        @keyframes cardFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .photo-container {
+            position: relative;
+            width: 100%;
+            padding-bottom: 56.25%;
+            background: #e5e5e3;
+            overflow: hidden;
+        }
+
+        .photo-container img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .photo-nav {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 1rem;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .listing-card:hover .photo-nav {
+            opacity: 1;
+        }
+
+        .photo-nav-btn {
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: #1c1c1e;
+            transition: all 0.2s;
+            font-weight: bold;
+        }
+
+        .photo-nav-btn:hover {
+            background: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .photo-count {
+            position: absolute;
+            top: 0.75rem;
+            right: 0.75rem;
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            padding: 0.4rem 0.8rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        /* CARD CONTENT */
+        .card-content {
+            padding: 1.5rem;
+        }
+
+        .monthly-payment {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #1a4731;
+            margin-bottom: 0.5rem;
+            font-family: 'DM Sans', sans-serif;
+        }
+
+        .down-payment {
+            font-size: 0.85rem;
+            color: #666;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .down-payment-icon {
+            font-size: 0.75rem;
+            opacity: 0.7;
+        }
+
+        .card-specs {
+            display: flex;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            color: #1c1c1e;
+            margin-bottom: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .card-specs span {
+            display: inline-block;
+        }
+
+        .spec-separator {
+            color: #999;
+        }
+
+        .card-address {
+            font-weight: 600;
+            color: #1c1c1e;
+            margin-bottom: 0.25rem;
+            line-height: 1.3;
+        }
+
+        .card-location {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .card-btn {
+            flex: 1;
+            padding: 0.75rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'DM Sans', sans-serif;
+        }
+
+        .btn-request {
+            background: #f0f0ee;
+            color: #1c1c1e;
+            border: 1px solid #d0d0cc;
+        }
+
+        .btn-request:hover {
+            background: #e5e5e3;
+        }
+
+        .btn-learn {
+            background: #1a4731;
+            color: white;
+        }
+
+        .btn-learn:hover {
+            opacity: 0.85;
+        }
+
+        /* EMPTY STATE */
+        .empty-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 4rem 2rem;
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .empty-state-text {
+            font-size: 1.1rem;
+            color: #666;
+            margin-bottom: 2rem;
+        }
+
+        .empty-state-btn {
+            background: #1a4731;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: 'DM Sans', sans-serif;
+            transition: opacity 0.2s;
+        }
+
+        .empty-state-btn:hover {
+            opacity: 0.85;
+        }
+
+        /* SKELETON LOADING */
+        .skeleton-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .skeleton-photo {
+            width: 100%;
+            padding-bottom: 56.25%;
+            background: linear-gradient(90deg, #e5e5e3 25%, #f0f0ee 50%, #e5e5e3 75%);
+            background-size: 200% 100%;
+            animation: skeleton-loading 1.5s infinite;
+        }
+
+        .skeleton-content {
+            padding: 1.5rem;
+        }
+
+        .skeleton-line {
+            height: 10px;
+            background: linear-gradient(90deg, #e5e5e3 25%, #f0f0ee 50%, #e5e5e3 75%);
+            background-size: 200% 100%;
+            animation: skeleton-loading 1.5s infinite;
+            border-radius: 4px;
+            margin-bottom: 0.75rem;
+        }
+
+        .skeleton-line:last-child {
+            margin-bottom: 0;
+        }
+
+        .skeleton-line.large {
+            height: 24px;
+            margin-bottom: 1rem;
+        }
+
+        @keyframes skeleton-loading {
+            0% {
+                background-position: 200% 0;
+            }
+            100% {
+                background-position: -200% 0;
+            }
+        }
+
+        /* FOOTER */
+        footer {
+            background: #1a4731;
+            color: white;
+            padding: 3rem 2rem;
+            margin-top: 4rem;
+        }
+
+        .footer-container {
+            max-width: 1440px;
+            margin: 0 auto;
+        }
+
+        .footer-top {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .footer-logo {
+            font-size: 1.25rem;
+            font-weight: 700;
+            font-family: 'Playfair Display', serif;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .footer-tagline {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            line-height: 1.4;
+        }
+
+        .footer-bottom {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+            opacity: 0.85;
+        }
+
+        .footer-copyright {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        @media (max-width: 768px) {
+            .footer-top {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+
+            .footer-bottom {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: flex-start;
+            }
+
+            footer {
+                padding: 2rem 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- HEADER -->
+    <header>
+        <div class="header-container">
+            <a href="https://finallysettled.com" class="logo">Finally Settled</a>
+            <button class="menu-toggle" aria-label="Toggle menu">☰</button>
+            <nav id="mainNav">
+                <a href="/homes" class="active">Browse Homes</a>
+                <a href="/how-it-works">How It Works</a>
+                <a href="/blog">Blog</a>
+                <a href="/apply" class="cta-apply">Start Pre-Approval</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- HERO STRIP -->
+    <section class="hero">
+        <div class="hero-container">
+            <h1>Find Your Home. No Bank Needed.</h1>
+            <p class="hero-subhead">Browse owner-financed homes in Alabama, Indiana &amp; Georgia. If you have a down payment, you may qualify today.</p>
+            <div class="stat-pills">
+                <div class="stat-pill"><span id="statHomesCount">Loading...</span> Homes Available</div>
+                <div class="stat-pill">20% Min. Down</div>
+                <div class="stat-pill">Move In ~35 Days</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FILTER BAR -->
+    <div class="filter-bar" id="filterBar">
+        <div class="filter-controls" id="filterControls">
+            <div class="filter-group">
+                <select class="filter-dropdown" id="cityFilter" aria-label="Filter by city">
+                    <option value="">All Cities</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <button class="filter-btn" data-beds="2" aria-label="Filter by 2+ bedrooms">2+ Beds</button>
+                <button class="filter-btn" data-beds="3" aria-label="Filter by 3+ bedrooms">3+ Beds</button>
+                <button class="filter-btn" data-beds="4" aria-label="Filter by 4+ bedrooms">4+ Beds</button>
+            </div>
+
+            <div class="filter-group">
+                <button class="filter-btn" data-baths="1" aria-label="Filter by 1+ bathrooms">1+ Ba</button>
+                <button class="filter-btn" data-baths="2" aria-label="Filter by 2+ bathrooms">2+ Ba</button>
+            </div>
+
+            <div class="filter-group">
+                <select class="filter-dropdown" id="sqftFilter" aria-label="Filter by square footage">
+                    <option value="">Any Size</option>
+                    <option value="0-1000">0–1,000 sq ft</option>
+                    <option value="1000-1500">1,000–1,500 sq ft</option>
+                    <option value="1500-2000">1,500–2,000 sq ft</option>
+                    <option value="2000-3000">2,000–3,000 sq ft</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <button class="filter-btn" id="moreFiltersBtn" aria-label="Open more filters">More Filters ▾</button>
+            </div>
+
+            <button class="clear-filters hidden" id="clearFiltersBtn" aria-label="Clear all filters">Clear All</button>
+
+            <div class="sort-wrapper">
+                <span class="sort-label">Sort:</span>
+                <select class="sort-dropdown" id="sortDropdown" aria-label="Sort listings">
+                    <option value="price-asc">Monthly Payment ↑</option>
+                    <option value="price-desc">Monthly Payment ↓</option>
+                    <option value="beds-desc">Most Bedrooms</option>
+                    <option value="sqft-desc">Largest (sq ft)</option>
+                    <option value="newest">Newest Listed</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- MORE FILTERS PANEL -->
+    <div class="more-filters-panel" id="moreFiltersPanel">
+        <div style="max-width: 1440px; margin: 0 auto;">
+            <div class="filter-section">
+                <div class="filter-label">Down Payment: <span id="downPaymentValue">20</span>%</div>
+                <div class="slider-container">
+                    <input type="range" id="downPaymentSlider" min="20" max="100" value="20" step="1" aria-label="Down payment percentage">
+                    <div class="slider-value"><span id="downPaymentDisplay">20%</span></div>
+                </div>
+            </div>
+
+            <div class="filter-section">
+                <div class="filter-label">Max Monthly Payment</div>
+                <input type="text" id="maxPaymentInput" class="max-payment-input" placeholder="$2,000/mo" aria-label="Maximum monthly payment">
+            </div>
+        </div>
+    </div>
+
+    <!-- RESULTS SECTION -->
+    <div class="results-header" id="resultsHeader" style="display: none;">
+        <div class="results-count" id="resultsCount">Showing X homes</div>
+    </div>
+
+    <!-- LISTINGS GRID -->
+    <div class="listings-container">
+        <div class="listings-grid" id="listingsGrid">
+            <!-- Populated by JS -->
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="footer-container">
+            <div class="footer-top">
+                <div>
+                    <span class="footer-logo">Finally Settled</span>
+                    <div class="footer-tagline">© 2025 finallysettled.com</div>
+                </div>
+                <div class="footer-tagline">
+                    Owner financing. No bank needed. No credit score required.
+                    <br><br>
+                    Equal Housing Opportunity. We are committed to ensuring equal housing opportunity for all people.
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <div class="footer-copyright">
+                    <span>Finally Settled © 2025</span>
+                    <span>finallysettled.com</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // CONSTANTS
+        const MONTHLY_RATE = 0.016666666666666666; // 20% APR ÷ 12
+        const TERM_MONTHS = 360; // 30 years
+
+        // APP STATE
+        let allListings = [];
+        let filteredListings = [];
+        let currentPhotoIndex = {};
+
+        const FILTERS = {
+            city: '',
+            beds: new Set(),
+            baths: new Set(),
+            sqftRange: '',
+            downPayment: 20,
+            maxPayment: null,
+        };
+
+        const SORT = {
+            by: 'price-asc',
+        };
+
+        // DOM ELEMENTS
+        const menuToggle = document.querySelector('.menu-toggle');
+        const nav = document.getElementById('mainNav');
+        const filterBar = document.getElementById('filterBar');
+        const moreFiltersBtn = document.getElementById('moreFiltersBtn');
+        const moreFiltersPanel = document.getElementById('moreFiltersPanel');
+        const listingsGrid = document.getElementById('listingsGrid');
+        const resultsHeader = document.getElementById('resultsHeader');
+        const resultsCount = document.getElementById('resultsCount');
+        const clearFiltersBtn = document.getElementById('clearFiltersBtn');
+        const downPaymentSlider = document.getElementById('downPaymentSlider');
+        const downPaymentValue = document.getElementById('downPaymentValue');
+        const downPaymentDisplay = document.getElementById('downPaymentDisplay');
+        const maxPaymentInput = document.getElementById('maxPaymentInput');
+        const cityFilter = document.getElementById('cityFilter');
+        const sqftFilter = document.getElementById('sqftFilter');
+        const sortDropdown = document.getElementById('sortDropdown');
+        const statHomesCount = document.getElementById('statHomesCount');
+
+        // INITIALIZATION
+        async function init() {
+            // Mobile menu toggle
+            menuToggle.addEventListener('click', () => {
+                nav.classList.toggle('active');
+            });
+
+            // Close mobile menu on link click
+            nav.querySelectorAll('a').forEach(link => {
+                link.addEventListener('click', () => {
+                    nav.classList.remove('active');
+                });
+            });
+
+            // More filters toggle
+            moreFiltersBtn.addEventListener('click', () => {
+                moreFiltersPanel.classList.toggle('active');
+            });
+
+            // Close more filters when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('#moreFiltersBtn') && !e.target.closest('.more-filters-panel')) {
+                    moreFiltersPanel.classList.remove('active');
+                }
+            });
+
+            // Filter event listeners
+            downPaymentSlider.addEventListener('input', handleDownPaymentChange);
+            maxPaymentInput.addEventListener('input', handleMaxPaymentChange);
+            cityFilter.addEventListener('change', handleCityChange);
+            sqftFilter.addEventListener('change', handleSqftChange);
+            sortDropdown.addEventListener('change', handleSortChange);
+            clearFiltersBtn.addEventListener('click', handleClearFilters);
+
+            // Bed/bath filter buttons
+            document.querySelectorAll('[data-beds]').forEach(btn => {
+                btn.addEventListener('click', handleBedsChange);
+            });
+            document.querySelectorAll('[data-baths]').forEach(btn => {
+                btn.addEventListener('click', handleBathsChange);
+            });
+
+            // Fetch listings
+            showLoadingState();
+            try {
+                const response = await fetch('/api/listings');
+                allListings = await response.json();
+                populateCityFilter();
+                updateStats();
+                applyFiltersAndSort();
+            } catch (error) {
+                console.error('Failed to fetch listings:', error);
+                listingsGrid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 3rem;">Failed to load homes. Please try again.</div>';
+            }
+        }
+
+        // PAYMENT CALCULATION
+        function calcPITI(listPrice, downPct, monthlyTaxes = 0, monthlyIns = 0) {
+            const downAmount = listPrice * (downPct / 100);
+            const principal = listPrice - downAmount;
+            const r = MONTHLY_RATE;
+            const n = TERM_MONTHS;
+            const PI = principal * (r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+            const PITI = PI + monthlyTaxes + monthlyIns;
+            return {
+                monthly: Math.round(PITI),
+                downAmount: Math.round(downAmount),
+            };
+        }
+
+        function formatCurrency(num) {
+            return '$' + num.toLocaleString('en-US');
+        }
+
+        function formatSqft(num) {
+            return num.toLocaleString('en-US') + ' sqft';
+        }
+
+        // FILTER HANDLERS
+        function handleDownPaymentChange(e) {
+            const value = parseInt(e.target.value, 10);
+            FILTERS.downPayment = value;
+            downPaymentValue.textContent = value;
+            downPaymentDisplay.textContent = value + '%';
+            updateCardsPayment();
+            checkClearButtonVisibility();
+        }
+
+        function handleMaxPaymentChange(e) {
+            const value = e.target.value;
+            if (value === '') {
+                FILTERS.maxPayment = null;
+            } else {
+                const numValue = parseInt(value.replace(/\D/g, ''), 10);
+                FILTERS.maxPayment = isNaN(numValue) ? null : numValue;
+            }
+            applyFiltersAndSort();
+            checkClearButtonVisibility();
+        }
+
+        function handleCityChange(e) {
+            FILTERS.city = e.target.value;
+            applyFiltersAndSort();
+            checkClearButtonVisibility();
+        }
+
+        function handleSqftChange(e) {
+            FILTERS.sqftRange = e.target.value;
+            applyFiltersAndSort();
+            checkClearButtonVisibility();
+        }
+
+        function handleBedsChange(e) {
+            const beds = parseInt(e.target.dataset.beds, 10);
+            if (FILTERS.beds.has(beds)) {
+                FILTERS.beds.delete(beds);
+                e.target.classList.remove('active');
+            } else {
+                FILTERS.beds.add(beds);
+                e.target.classList.add('active');
+            }
+            applyFiltersAndSort();
+            checkClearButtonVisibility();
+        }
+
+        function handleBathsChange(e) {
+            const baths = parseInt(e.target.dataset.baths, 10);
+            if (FILTERS.baths.has(baths)) {
+                FILTERS.baths.delete(baths);
+                e.target.classList.remove('active');
+            } else {
+                FILTERS.baths.add(baths);
+                e.target.classList.add('active');
+            }
+            applyFiltersAndSort();
+            checkClearButtonVisibility();
+        }
+
+        function handleSortChange(e) {
+            SORT.by = e.target.value;
+            applyFiltersAndSort();
+        }
+
+        function handleClearFilters() {
+            FILTERS.city = '';
+            FILTERS.beds.clear();
+            FILTERS.baths.clear();
+            FILTERS.sqftRange = '';
+            FILTERS.downPayment = 20;
+            FILTERS.maxPayment = null;
+
+            cityFilter.value = '';
+            sqftFilter.value = '';
+            downPaymentSlider.value = 20;
+            downPaymentValue.textContent = '20';
+            downPaymentDisplay.textContent = '20%';
+            maxPaymentInput.value = '';
+            sortDropdown.value = 'price-asc';
+            SORT.by = 'price-asc';
+
+            document.querySelectorAll('[data-beds].active, [data-baths].active').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            checkClearButtonVisibility();
+            applyFiltersAndSort();
+        }
+
+        // FILTERING & SORTING
+        function applyFiltersAndSort() {
+            filteredListings = allListings.filter(listing => {
+                // City filter
+                if (FILTERS.city && listing.city !== FILTERS.city) return false;
+
+                // Beds filter
+                if (FILTERS.beds.size > 0 && !Array.from(FILTERS.beds).some(b => listing.beds >= b)) return false;
+
+                // Baths filter
+                if (FILTERS.baths.size > 0 && !Array.from(FILTERS.baths).some(b => listing.baths >= b)) return false;
+
+                // Sqft filter
+                if (FILTERS.sqftRange) {
+                    const [min, max] = FILTERS.sqftRange.split('-').map(Number);
+                    if (listing.sqft < min || listing.sqft > max) return false;
+                }
+
+                // Max payment filter
+                if (FILTERS.maxPayment) {
+                    const { monthly } = calcPITI(listing.listPrice, FILTERS.downPayment, listing.monthlyTaxes, listing.monthlyIns);
+                    if (monthly > FILTERS.maxPayment) return false;
+                }
+
+                return true;
+            });
+
+            // Sort
+            if (SORT.by === 'price-asc') {
+                filteredListings.sort((a, b) => {
+                    const aPayment = calcPITI(a.listPrice, FILTERS.downPayment, a.monthlyTaxes, a.monthlyIns).monthly;
+                    const bPayment = calcPITI(b.listPrice, FILTERS.downPayment, b.monthlyTaxes, b.monthlyIns).monthly;
+                    return aPayment - bPayment;
+                });
+            } else if (SORT.by === 'price-desc') {
+                filteredListings.sort((a, b) => {
+                    const aPayment = calcPITI(a.listPrice, FILTERS.downPayment, a.monthlyTaxes, a.monthlyIns).monthly;
+                    const bPayment = calcPITI(b.listPrice, FILTERS.downPayment, b.monthlyTaxes, b.monthlyIns).monthly;
+                    return bPayment - aPayment;
+                });
+            } else if (SORT.by === 'beds-desc') {
+                filteredListings.sort((a, b) => b.beds - a.beds);
+            } else if (SORT.by === 'sqft-desc') {
+                filteredListings.sort((a, b) => b.sqft - a.sqft);
+            } else if (SORT.by === 'newest') {
+                // Assume newer listings come first (would need added date in API)
+                filteredListings.reverse();
+            }
+
+            renderListings();
+            updateResultsCount();
+        }
+
+        // RENDERING
+        function showLoadingState() {
+            listingsGrid.innerHTML = '';
+            for (let i = 0; i < 6; i++) {
+                const skeleton = document.createElement('div');
+                skeleton.className = 'skeleton-card';
+                skeleton.innerHTML = `
+                    <div class="skeleton-photo"></div>
+                    <div class="skeleton-content">
+                        <div class="skeleton-line large"></div>
+                        <div class="skeleton-line"></div>
+                        <div class="skeleton-line"></div>
+                        <div class="skeleton-line"></div>
+                    </div>
+                `;
+                listingsGrid.appendChild(skeleton);
+            }
+        }
+
+        function renderListings() {
+            resultsHeader.style.display = 'block';
+
+            if (filteredListings.length === 0) {
+                listingsGrid.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🔍</div>
+                        <div class="empty-state-text">No homes match your filters. Try adjusting your search.</div>
+                        <button class="empty-state-btn" onclick="document.getElementById('clearFiltersBtn').click()">Clear All Filters</button>
+                    </div>
+                `;
+                return;
+            }
+
+            listingsGrid.innerHTML = '';
+            filteredListings.forEach((listing, index) => {
+                const cardHtml = createCardHTML(listing, index);
+                const card = document.createElement('div');
+                card.innerHTML = cardHtml;
+                const cardElement = card.firstElementChild;
+                cardElement.style.animationDelay = `${index * 50}ms`;
+                listingsGrid.appendChild(cardElement);
+
+                // Initialize photo carousel
+                currentPhotoIndex[listing.id] = 0;
+
+                // Photo navigation
+                const prevBtn = cardElement.querySelector('[data-prev]');
+                const nextBtn = cardElement.querySelector('[data-next]');
+                const photoContainer = cardElement.querySelector('.photo-container img');
+
+                if (prevBtn) {
+                    prevBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        prevPhoto(listing, cardElement);
+                    });
+                }
+
+                if (nextBtn) {
+                    nextBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        nextPhoto(listing, cardElement);
+                    });
+                }
+
+                // Photo preloading on hover
+                cardElement.querySelector('.photo-container').addEventListener('mouseenter', () => {
+                    preloadAdjacentPhotos(listing);
+                });
+
+                // Card click navigation
+                cardElement.addEventListener('click', () => {
+                    window.location.href = `/homes/listing/?id=${listing.id}`;
+                });
+
+                // CTA click handlers
+                const requestBtn = cardElement.querySelector('[data-request]');
+                if (requestBtn) {
+                    requestBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        window.location.href = '/request-showing';
+                    });
+                }
+
+                const learnBtn = cardElement.querySelector('[data-learn]');
+                if (learnBtn) {
+                    learnBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        window.location.href = `/homes/listing/?id=${listing.id}`;
+                    });
+                }
+            });
+        }
+
+        function createCardHTML(listing, index) {
+            const { monthly, downAmount } = calcPITI(listing.listPrice, FILTERS.downPayment, listing.monthlyTaxes, listing.monthlyIns);
+            const photoUrl = `/api/image?key=${listing.photoKeys[0]}`;
+            const photoCount = listing.photoKeys.length;
+
+            return `
+                <div class="listing-card" data-id="${listing.id}">
+                    <div class="photo-container">
+                        <img src="${photoUrl}" alt="${listing.address}" loading="lazy">
+                        <div class="photo-nav">
+                            <button class="photo-nav-btn" data-prev aria-label="Previous photo">‹</button>
+                            <button class="photo-nav-btn" data-next aria-label="Next photo">›</button>
+                        </div>
+                        <div class="photo-count"><span data-current>1</span>/${photoCount}</div>
+                    </div>
+                    <div class="card-content">
+                        <div class="monthly-payment">Own it for ${formatCurrency(monthly)}/mo</div>
+                        <div class="down-payment"><span class="down-payment-icon">↕</span> Down: ${formatCurrency(downAmount)} (${FILTERS.downPayment}%)</div>
+                        <div class="card-specs">
+                            <span>${listing.beds} bd</span>
+                            <span class="spec-separator">·</span>
+                            <span>${listing.baths} ba</span>
+                            <span class="spec-separator">·</span>
+                            <span>${formatSqft(listing.sqft)}</span>
+                        </div>
+                        <div class="card-address">${listing.street}</div>
+                        <div class="card-location">${listing.city}, ${listing.state} ${listing.zip}</div>
+                        <div class="card-actions">
+                            <button class="card-btn btn-request" data-request>Request Showing</button>
+                            <button class="card-btn btn-learn" data-learn>Learn More</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function updateCardsPayment() {
+            document.querySelectorAll('.listing-card').forEach(card => {
+                const id = card.dataset.id;
+                const listing = allListings.find(l => l.id === id);
+                if (listing) {
+                    const { monthly, downAmount } = calcPITI(listing.listPrice, FILTERS.downPayment, listing.monthlyTaxes, listing.monthlyIns);
+                    card.querySelector('.monthly-payment').textContent = `Own it for ${formatCurrency(monthly)}/mo`;
+                    card.querySelector('.down-payment').innerHTML = `<span class="down-payment-icon">↕</span> Down: ${formatCurrency(downAmount)} (${FILTERS.downPayment}%)`;
+                }
+            });
+        }
+
+        function prevPhoto(listing, cardElement) {
+            let index = currentPhotoIndex[listing.id];
+            index = index === 0 ? listing.photoKeys.length - 1 : index - 1;
+            currentPhotoIndex[listing.id] = index;
+            updateCardPhoto(listing, cardElement);
+        }
+
+        function nextPhoto(listing, cardElement) {
+            let index = currentPhotoIndex[listing.id];
+            index = index === listing.photoKeys.length - 1 ? 0 : index + 1;
+            currentPhotoIndex[listing.id] = index;
+            updateCardPhoto(listing, cardElement);
+        }
+
+        function updateCardPhoto(listing, cardElement) {
+            const index = currentPhotoIndex[listing.id];
+            const photoUrl = `/api/image?key=${listing.photoKeys[index]}`;
+            const img = cardElement.querySelector('.photo-container img');
+            img.src = photoUrl;
+            cardElement.querySelector('[data-current]').textContent = index + 1;
+        }
+
+        function preloadAdjacentPhotos(listing) {
+            const index = currentPhotoIndex[listing.id];
+            const prev = index === 0 ? listing.photoKeys.length - 1 : index - 1;
+            const next = index === listing.photoKeys.length - 1 ? 0 : index + 1;
+
+            ['photoKeys', listing.photoKeys].forEach(key => {
+                [prev, next].forEach(i => {
+                    const img = new Image();
+                    img.src = `/api/image?key=${listing.photoKeys[i]}`;
+                });
+            });
+        }
+
+        function updateResultsCount() {
+            const count = filteredListings.length;
+            resultsCount.textContent = `Showing ${count} home${count !== 1 ? 's' : ''}`;
+        }
+
+        function populateCityFilter() {
+            const cities = [...new Set(allListings.map(l => l.city))].sort();
+            cities.forEach(city => {
+                const option = document.createElement('option');
+                option.value = city;
+                option.textContent = city;
+                cityFilter.appendChild(option);
+            });
+        }
+
+        function updateStats() {
+            statHomesCount.textContent = allListings.length.toLocaleString('en-US');
+        }
+
+        function checkClearButtonVisibility() {
+            const hasFilters = FILTERS.city || FILTERS.beds.size > 0 || FILTERS.baths.size > 0 || FILTERS.sqftRange || FILTERS.maxPayment || FILTERS.downPayment !== 20;
+            clearFiltersBtn.classList.toggle('hidden', !hasFilters);
+        }
+
+        // START
+        init();
+    </script>
+</body>
+</html>
