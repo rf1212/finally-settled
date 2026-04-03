@@ -1,0 +1,1169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home Details | Finally Settled</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            min-height: 100%;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            color: #1c1c1e;
+            background-color: #fafaf8;
+            line-height: 1.6;
+        }
+
+        /* HEADER */
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background: white;
+            border-bottom: 1px solid #e5e5e3;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .header-container {
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: 1rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1a4731;
+            text-decoration: none;
+            font-family: 'Playfair Display', serif;
+            letter-spacing: -0.5px;
+        }
+
+        .logo:hover {
+            opacity: 0.8;
+        }
+
+        nav {
+            display: none;
+            gap: 2rem;
+            align-items: center;
+            flex: 1;
+            margin-left: 4rem;
+        }
+
+        nav.active {
+            display: flex;
+        }
+
+        nav a {
+            color: #1c1c1e;
+            text-decoration: none;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        nav a:hover,
+        nav a.active {
+            color: #1a4731;
+        }
+
+        .cta-apply {
+            background-color: #1a4731;
+            color: white;
+            padding: 0.65rem 1.5rem;
+            border-radius: 4px;
+            text-decoration: none;
+            font-size: 0.95rem;
+            font-weight: 600;
+            transition: opacity 0.2s;
+            border: none;
+            cursor: pointer;
+            display: inline-block;
+        }
+
+        .cta-apply:hover {
+            opacity: 0.85;
+        }
+
+        .menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #1c1c1e;
+        }
+
+        @media (max-width: 768px) {
+            .header-container {
+                padding: 1rem;
+            }
+
+            nav {
+                display: none !important;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                flex-direction: column;
+                background: white;
+                padding: 2rem;
+                border-bottom: 1px solid #e5e5e3;
+                gap: 1rem;
+                width: 100%;
+            }
+
+            nav.active {
+                display: flex !important;
+            }
+
+            .menu-toggle {
+                display: block;
+            }
+
+            .logo {
+                font-size: 1.25rem;
+            }
+        }
+
+        /* BREADCRUMB */
+        .breadcrumb {
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: 1.5rem 2rem;
+            font-size: 0.95rem;
+            color: #666;
+            background: white;
+            border-bottom: 1px solid #e5e5e3;
+        }
+
+        .breadcrumb a {
+            color: #1a4731;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .breadcrumb a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            .breadcrumb {
+                padding: 1rem;
+                font-size: 0.85rem;
+            }
+        }
+
+        /* CONTENT CONTAINER */
+        .main-container {
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+            align-items: start;
+        }
+
+        @media (max-width: 1023px) {
+            .main-container {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+                padding: 1.5rem;
+            }
+        }
+
+        /* PHOTO GALLERY */
+        .photo-gallery {
+            position: sticky;
+            top: 100px;
+        }
+
+        .hero-photo-container {
+            position: relative;
+            width: 100%;
+            padding-bottom: 56.25%;
+            background: #e5e5e3;
+            overflow: hidden;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+        }
+
+        .hero-photo-container img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            transition: opacity 0.3s ease;
+        }
+
+        .photo-counter {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .thumbnail-strip {
+            display: flex;
+            gap: 0.75rem;
+            overflow-x: auto;
+            padding: 0.5rem;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .thumbnail-strip::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .thumbnail-strip::-webkit-scrollbar-track {
+            background: #f0f0ee;
+        }
+
+        .thumbnail-strip::-webkit-scrollbar-thumb {
+            background: #c9a84c;
+            border-radius: 3px;
+        }
+
+        .thumbnail {
+            flex-shrink: 0;
+            width: 80px;
+            height: 60px;
+            border-radius: 6px;
+            overflow: hidden;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.2s;
+            background: #e5e5e3;
+        }
+
+        .thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .thumbnail:hover {
+            border-color: #d0d0cc;
+        }
+
+        .thumbnail.active {
+            border-color: #c9a962;
+            box-shadow: 0 0 0 2px rgba(201, 169, 98, 0.3);
+        }
+
+        @media (max-width: 768px) {
+            .photo-gallery {
+                position: relative;
+                top: auto;
+            }
+        }
+
+        /* LEFT COLUMN CONTENT */
+        .property-details {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .property-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1c1c1e;
+            margin-bottom: 0.5rem;
+            line-height: 1.2;
+        }
+
+        .property-subtitle {
+            font-size: 1rem;
+            color: #666;
+            margin-bottom: 1.5rem;
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .property-subtitle span {
+            display: inline-block;
+        }
+
+        .property-subtitle .separator {
+            color: #999;
+        }
+
+        .property-divider {
+            height: 1px;
+            background: #e5e5e3;
+            margin: 1.5rem 0;
+        }
+
+        .property-section {
+            margin-bottom: 2rem;
+        }
+
+        .property-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1c1c1e;
+            margin-bottom: 1rem;
+        }
+
+        .property-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        .property-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .property-label {
+            font-size: 0.85rem;
+            color: #666;
+            font-weight: 500;
+            margin-bottom: 0.4rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .property-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1c1c1e;
+        }
+
+        /* RIGHT COLUMN SIDEBAR */
+        .sidebar {
+            position: sticky;
+            top: 100px;
+            height: fit-content;
+        }
+
+        .sidebar-card {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            margin-bottom: 2rem;
+        }
+
+        .sidebar-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1c1c1e;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .payment-label {
+            font-size: 0.95rem;
+            color: #666;
+            margin-bottom: 1rem;
+        }
+
+        .payment-amount {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #1a4731;
+            margin-bottom: 0.5rem;
+            line-height: 1.1;
+        }
+
+        .payment-subtitle {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 1.5rem;
+        }
+
+        .down-payment-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .down-payment-label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #1c1c1e;
+            margin-bottom: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .down-payment-value {
+            color: #1a4731;
+            font-weight: 700;
+        }
+
+        .down-payment-range {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 0.5rem;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #d0d0cc;
+            outline: none;
+            -webkit-appearance: none;
+            margin-top: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #1a4731;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #1a4731;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .btn-primary,
+        .btn-secondary {
+            padding: 1rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'DM Sans', sans-serif;
+            text-decoration: none;
+            text-align: center;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: #1a4731;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.85;
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #1a4731;
+            border: 1px solid #d0d0cc;
+        }
+
+        .btn-secondary:hover {
+            border-color: #1a4731;
+            background: #f9f9f7;
+        }
+
+        .benefits {
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #e5e5e3;
+        }
+
+        .benefit-item {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+            font-size: 0.95rem;
+            color: #1c1c1e;
+        }
+
+        .benefit-icon {
+            color: #1a4731;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        /* SIMILAR HOMES SECTION */
+        .similar-homes-section {
+            max-width: 1440px;
+            margin: 4rem auto 0;
+            padding: 3rem 2rem;
+            background: white;
+            border-top: 1px solid #e5e5e3;
+        }
+
+        .section-heading {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #1c1c1e;
+            margin-bottom: 2rem;
+        }
+
+        .homes-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+        }
+
+        @media (max-width: 1023px) {
+            .homes-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1.5rem;
+            }
+        }
+
+        @media (max-width: 767px) {
+            .homes-grid {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+
+            .similar-homes-section {
+                padding: 2rem 1rem;
+            }
+        }
+
+        /* LISTING CARD FOR SIMILAR HOMES */
+        .listing-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            border: 1px solid #e5e5e3;
+        }
+
+        .listing-card:hover {
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+            transform: translateY(-4px);
+        }
+
+        .photo-container {
+            position: relative;
+            width: 100%;
+            padding-bottom: 56.25%;
+            background: #e5e5e3;
+            overflow: hidden;
+        }
+
+        .photo-container img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .card-content {
+            padding: 1.5rem;
+        }
+
+        .monthly-payment {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #1a4731;
+            margin-bottom: 1rem;
+            font-family: 'DM Sans', sans-serif;
+        }
+
+        .card-specs {
+            display: flex;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            color: #1c1c1e;
+            margin-bottom: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .card-specs span {
+            display: inline-block;
+        }
+
+        .spec-separator {
+            color: #999;
+        }
+
+        .card-address {
+            font-weight: 600;
+            color: #1c1c1e;
+            margin-bottom: 0.25rem;
+            line-height: 1.3;
+        }
+
+        .card-location {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        /* ERROR STATE */
+        .error-container {
+            max-width: 600px;
+            margin: 4rem auto;
+            padding: 3rem 2rem;
+            text-align: center;
+        }
+
+        .error-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .error-text {
+            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 2rem;
+            line-height: 1.5;
+        }
+
+        .error-btn {
+            background: #1a4731;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: 'DM Sans', sans-serif;
+            text-decoration: none;
+            transition: opacity 0.2s;
+            display: inline-block;
+        }
+
+        .error-btn:hover {
+            opacity: 0.85;
+        }
+
+        /* SKELETON LOADING */
+        .skeleton-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .skeleton-photo {
+            width: 100%;
+            padding-bottom: 56.25%;
+            background: linear-gradient(90deg, #e5e5e3 25%, #f0f0ee 50%, #e5e5e3 75%);
+            background-size: 200% 100%;
+            animation: skeleton-loading 1.5s infinite;
+        }
+
+        .skeleton-content {
+            padding: 2rem;
+        }
+
+        .skeleton-line {
+            height: 12px;
+            background: linear-gradient(90deg, #e5e5e3 25%, #f0f0ee 50%, #e5e5e3 75%);
+            background-size: 200% 100%;
+            animation: skeleton-loading 1.5s infinite;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+        }
+
+        .skeleton-line.large {
+            height: 32px;
+            margin-bottom: 1.5rem;
+        }
+
+        .skeleton-line:last-child {
+            margin-bottom: 0;
+        }
+
+        @keyframes skeleton-loading {
+            0% {
+                background-position: 200% 0;
+            }
+            100% {
+                background-position: -200% 0;
+            }
+        }
+
+        /* FOOTER */
+        footer {
+            background: #1a4731;
+            color: white;
+            padding: 3rem 2rem;
+            margin-top: 4rem;
+        }
+
+        .footer-container {
+            max-width: 1440px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .footer-copyright {
+            font-size: 0.9rem;
+            opacity: 0.85;
+        }
+
+        @media (max-width: 768px) {
+            footer {
+                padding: 2rem 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- HEADER -->
+    <header>
+        <div class="header-container">
+            <a href="/" class="logo">Finally Settled</a>
+            <button class="menu-toggle" aria-label="Toggle menu">☰</button>
+            <nav id="mainNav">
+                <a href="/">Home</a>
+                <a href="/homes">Homes</a>
+                <a href="/how-it-works">How It Works</a>
+                <a href="/blog">Blog</a>
+                <a href="/apply" class="cta-apply">Apply</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- BREADCRUMB -->
+    <div class="breadcrumb" id="breadcrumb">
+        <!-- Populated by JS -->
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-container" id="mainContent">
+        <!-- Loading skeleton will be shown here -->
+    </div>
+
+    <!-- SIMILAR HOMES SECTION -->
+    <section class="similar-homes-section" id="similarSection" style="display: none;">
+        <h2 class="section-heading">More Homes You May Like</h2>
+        <div class="homes-grid" id="similarHomes">
+            <!-- Populated by JS -->
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="footer-container">
+            <div class="footer-copyright">© 2024 Finally Settled. All rights reserved.</div>
+        </div>
+    </footer>
+
+    <script>
+        // CONSTANTS
+        const MONTHLY_RATE = 0.016666666666666666; // 20% APR ÷ 12
+        const TERM_MONTHS = 360; // 30 years
+        const DEFAULT_DOWN = 20;
+
+        // STATE
+        let listing = null;
+        let allListings = [];
+        let currentPhotoIndex = 0;
+        let downPayment = DEFAULT_DOWN;
+
+        // DOM
+        const mainContent = document.getElementById('mainContent');
+        const breadcrumb = document.getElementById('breadcrumb');
+        const similarSection = document.getElementById('similarSection');
+        const similarHomes = document.getElementById('similarHomes');
+        const menuToggle = document.querySelector('.menu-toggle');
+        const nav = document.getElementById('mainNav');
+
+        // INITIALIZATION
+        async function init() {
+            // Mobile menu toggle
+            menuToggle.addEventListener('click', () => {
+                nav.classList.toggle('active');
+            });
+
+            // Close mobile menu on link click
+            nav.querySelectorAll('a').forEach(link => {
+                link.addEventListener('click', () => {
+                    nav.classList.remove('active');
+                });
+            });
+
+            // Get ID from URL
+            const params = new URLSearchParams(window.location.search);
+            const listingId = params.get('id');
+
+            if (!listingId) {
+                showError('No listing ID provided');
+                return;
+            }
+
+            showLoadingState();
+
+            try {
+                const response = await fetch('/api/listings');
+                allListings = await response.json();
+                listing = allListings.find(l => l.id === listingId);
+
+                if (!listing) {
+                    showError('This home is no longer available');
+                    return;
+                }
+
+                render();
+                setupPhotoGallery();
+                setupDownPaymentSlider();
+                renderSimilarHomes();
+            } catch (error) {
+                console.error('Failed to load listing:', error);
+                showError('Failed to load home details. Please try again.');
+            }
+        }
+
+        // PAYMENT CALCULATION
+        function calcPITI(listPrice, downPct, monthlyTaxes = 0, monthlyIns = 0) {
+            const downAmount = listPrice * (downPct / 100);
+            const principal = listPrice - downAmount;
+            const r = MONTHLY_RATE;
+            const n = TERM_MONTHS;
+            const PI = principal * (r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+            const PITI = PI + monthlyTaxes + monthlyIns;
+            return {
+                monthly: Math.round(PITI),
+                downAmount: Math.round(downAmount),
+            };
+        }
+
+        function formatCurrency(num) {
+            return '$' + num.toLocaleString('en-US');
+        }
+
+        function formatSqft(num) {
+            return num.toLocaleString('en-US') + ' sqft';
+        }
+
+        function formatAcres(acres) {
+            return acres.toFixed(2) + ' acres';
+        }
+
+        // RENDER MAIN CONTENT
+        function render() {
+            const { monthly, downAmount } = calcPITI(listing.listPrice, downPayment, listing.monthlyTaxes, listing.monthlyIns);
+
+            // Breadcrumb
+            breadcrumb.innerHTML = `
+                <a href="/homes">Browse Homes</a> >
+                ${listing.city}, ${listing.state} >
+                <span>${listing.street}</span>
+            `;
+
+            // Main content
+            mainContent.innerHTML = `
+                <!-- LEFT COLUMN -->
+                <div>
+                    <!-- PHOTO GALLERY -->
+                    <div class="photo-gallery">
+                        <div class="hero-photo-container">
+                            <img id="heroPhoto" src="/api/image?key=${listing.photoKeys[0]}" alt="${listing.address}" loading="eager">
+                            <div class="photo-counter">
+                                <span id="photoNum">1</span> of ${listing.photoKeys.length}
+                            </div>
+                        </div>
+                        <div class="thumbnail-strip" id="thumbnailStrip">
+                            ${listing.photoKeys.map((key, idx) => `
+                                <div class="thumbnail ${idx === 0 ? 'active' : ''}" data-idx="${idx}">
+                                    <img src="/api/image?key=${key}" alt="Photo ${idx + 1}" loading="lazy">
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <!-- PROPERTY DETAILS -->
+                    <div class="property-details">
+                        <h1 class="property-title">${listing.street}</h1>
+                        <div class="property-subtitle">
+                            <span>${listing.beds} beds</span>
+                            <span class="separator">·</span>
+                            <span>${listing.baths} baths</span>
+                            <span class="separator">·</span>
+                            <span>${formatSqft(listing.sqft)}</span>
+                            <span class="separator">·</span>
+                            <span>${formatAcres(listing.lotAcres)}</span>
+                        </div>
+
+                        <div class="property-divider"></div>
+
+                        <div class="property-section">
+                            <h3 class="section-title">About This Home</h3>
+                            <div class="property-grid">
+                                <div class="property-item">
+                                    <div class="property-label">Property Type</div>
+                                    <div class="property-value">House</div>
+                                </div>
+                                <div class="property-item">
+                                    <div class="property-label">Square Footage</div>
+                                    <div class="property-value">${formatSqft(listing.sqft)}</div>
+                                </div>
+                                <div class="property-item">
+                                    <div class="property-label">Lot Size</div>
+                                    <div class="property-value">${formatAcres(listing.lotAcres)}</div>
+                                </div>
+                                <div class="property-item">
+                                    <div class="property-label">Bedrooms</div>
+                                    <div class="property-value">${listing.beds}</div>
+                                </div>
+                                <div class="property-item">
+                                    <div class="property-label">Bathrooms</div>
+                                    <div class="property-value">${listing.baths}</div>
+                                </div>
+                                <div class="property-item">
+                                    <div class="property-label">Listed By</div>
+                                    <div class="property-value">${listing.listingAgent}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RIGHT COLUMN SIDEBAR -->
+                <div class="sidebar">
+                    <div class="sidebar-card">
+                        <div class="sidebar-title">🏡 Own This Home</div>
+
+                        <div class="payment-label">Own it for</div>
+                        <div class="payment-amount" id="paymentAmount">${formatCurrency(monthly)}/mo</div>
+                        <div class="payment-subtitle">Includes taxes & insurance</div>
+
+                        <div class="down-payment-section">
+                            <div class="down-payment-label">
+                                <span>Down Payment</span>
+                                <span><span id="downPaymentAmount">${formatCurrency(downAmount)}</span> — <span id="downPaymentPct">${downPayment}%</span></span>
+                            </div>
+                            <input type="range" id="downPaymentSlider" min="20" max="100" value="${downPayment}" step="1" aria-label="Down payment percentage">
+                            <div class="down-payment-range">Minimum 20%  ·  Max 100%</div>
+                        </div>
+
+                        <div class="btn-group">
+                            <a href="/request-showing" class="btn-primary">Request a Showing →</a>
+                            <a href="/apply" class="btn-secondary">Start Pre-Approval →</a>
+                        </div>
+
+                        <div class="benefits">
+                            <div class="benefit-item">
+                                <span class="benefit-icon">✅</span>
+                                <span>No bank approval needed</span>
+                            </div>
+                            <div class="benefit-item">
+                                <span class="benefit-icon">✅</span>
+                                <span>Bad credit OK</span>
+                            </div>
+                            <div class="benefit-item">
+                                <span class="benefit-icon">✅</span>
+                                <span>Move in ~35 days</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // PHOTO GALLERY
+        function setupPhotoGallery() {
+            const thumbnails = document.querySelectorAll('.thumbnail');
+            const heroPhoto = document.getElementById('heroPhoto');
+            const photoNum = document.getElementById('photoNum');
+
+            thumbnails.forEach((thumb, idx) => {
+                thumb.addEventListener('click', () => {
+                    currentPhotoIndex = idx;
+                    updateHeroPhoto();
+                    updateThumbnailHighlight();
+                });
+            });
+
+            // Keyboard navigation
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowLeft') {
+                    currentPhotoIndex = currentPhotoIndex === 0 ? listing.photoKeys.length - 1 : currentPhotoIndex - 1;
+                    updateHeroPhoto();
+                    updateThumbnailHighlight();
+                } else if (e.key === 'ArrowRight') {
+                    currentPhotoIndex = currentPhotoIndex === listing.photoKeys.length - 1 ? 0 : currentPhotoIndex + 1;
+                    updateHeroPhoto();
+                    updateThumbnailHighlight();
+                }
+            });
+        }
+
+        function updateHeroPhoto() {
+            const heroPhoto = document.getElementById('heroPhoto');
+            const photoNum = document.getElementById('photoNum');
+            const key = listing.photoKeys[currentPhotoIndex];
+            heroPhoto.src = `/api/image?key=${key}`;
+            photoNum.textContent = currentPhotoIndex + 1;
+        }
+
+        function updateThumbnailHighlight() {
+            document.querySelectorAll('.thumbnail').forEach((thumb, idx) => {
+                thumb.classList.toggle('active', idx === currentPhotoIndex);
+            });
+        }
+
+        // DOWN PAYMENT SLIDER
+        function setupDownPaymentSlider() {
+            const slider = document.getElementById('downPaymentSlider');
+            slider.addEventListener('input', (e) => {
+                downPayment = parseInt(e.target.value, 10);
+                updatePaymentDisplay();
+            });
+        }
+
+        function updatePaymentDisplay() {
+            const { monthly, downAmount } = calcPITI(listing.listPrice, downPayment, listing.monthlyTaxes, listing.monthlyIns);
+            document.getElementById('paymentAmount').textContent = `${formatCurrency(monthly)}/mo`;
+            document.getElementById('downPaymentAmount').textContent = formatCurrency(downAmount);
+            document.getElementById('downPaymentPct').textContent = `${downPayment}%`;
+        }
+
+        // SIMILAR HOMES
+        function renderSimilarHomes() {
+            // Filter listings from same city
+            let sameCityListings = allListings
+                .filter(l => l.id !== listing.id && l.city === listing.city)
+                .map(l => ({
+                    ...l,
+                    monthlyPayment: calcPITI(l.listPrice, DEFAULT_DOWN, l.monthlyTaxes, l.monthlyIns).monthly,
+                }));
+
+            const currentPayment = calcPITI(listing.listPrice, DEFAULT_DOWN, listing.monthlyTaxes, listing.monthlyIns).monthly;
+
+            // Sort by closest payment
+            sameCityListings.sort((a, b) =>
+                Math.abs(a.monthlyPayment - currentPayment) - Math.abs(b.monthlyPayment - currentPayment)
+            );
+
+            // If less than 3, fill from all listings
+            if (sameCityListings.length < 3) {
+                const otherListings = allListings
+                    .filter(l => l.id !== listing.id && !sameCityListings.some(s => s.id === l.id))
+                    .map(l => ({
+                        ...l,
+                        monthlyPayment: calcPITI(l.listPrice, DEFAULT_DOWN, l.monthlyTaxes, l.monthlyIns).monthly,
+                    }))
+                    .sort((a, b) =>
+                        Math.abs(a.monthlyPayment - currentPayment) - Math.abs(b.monthlyPayment - currentPayment)
+                    );
+
+                sameCityListings = [...sameCityListings, ...otherListings].slice(0, 3);
+            } else {
+                sameCityListings = sameCityListings.slice(0, 3);
+            }
+
+            if (sameCityListings.length === 0) {
+                similarSection.style.display = 'none';
+                return;
+            }
+
+            similarSection.style.display = 'block';
+            similarHomes.innerHTML = sameCityListings.map(l => `
+                <div class="listing-card" onclick="window.location.href='/homes/listing/?id=${l.id}'">
+                    <div class="photo-container">
+                        <img src="/api/image?key=${l.photoKeys[0]}" alt="${l.address}" loading="lazy">
+                    </div>
+                    <div class="card-content">
+                        <div class="monthly-payment">Own it for ${formatCurrency(l.monthlyPayment)}/mo</div>
+                        <div class="card-specs">
+                            <span>${l.beds} bd</span>
+                            <span class="spec-separator">·</span>
+                            <span>${l.baths} ba</span>
+                            <span class="spec-separator">·</span>
+                            <span>${formatSqft(l.sqft)}</span>
+                        </div>
+                        <div class="card-address">${l.street}</div>
+                        <div class="card-location">${l.city}, ${l.state} ${l.zip}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // ERROR STATE
+        function showError(message) {
+            mainContent.innerHTML = `
+                <div class="error-container">
+                    <div class="error-icon">🏠</div>
+                    <div class="error-text">${message}</div>
+                    <a href="/homes" class="error-btn">Browse All Homes</a>
+                </div>
+            `;
+            similarSection.style.display = 'none';
+        }
+
+        // LOADING STATE
+        function showLoadingState() {
+            mainContent.innerHTML = `
+                <div class="skeleton-card">
+                    <div class="skeleton-photo"></div>
+                </div>
+                <div class="skeleton-card">
+                    <div class="skeleton-content">
+                        <div class="skeleton-line large"></div>
+                        <div class="skeleton-line"></div>
+                        <div class="skeleton-line"></div>
+                        <div class="skeleton-line"></div>
+                        <div class="skeleton-line"></div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // START
+        init();
+    </script>
+</body>
+</html>
