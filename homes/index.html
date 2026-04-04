@@ -496,12 +496,17 @@
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             cursor: pointer;
-            animation: cardFadeIn 0.6s ease-out both;
+            opacity: 0;
+            transform: translateY(20px);
         }
 
         .listing-card:hover {
             box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
             transform: translateY(-4px);
+        }
+
+        .listing-card.is-visible {
+            animation: cardFadeIn 0.6s ease-out both;
         }
 
         @keyframes cardFadeIn {
@@ -1260,7 +1265,6 @@
                 const card = document.createElement('div');
                 card.innerHTML = cardHtml;
                 const cardElement = card.firstElementChild;
-                cardElement.style.animationDelay = `${index * 50}ms`;
                 listingsGrid.appendChild(cardElement);
 
                 // Initialize photo carousel
@@ -1311,6 +1315,27 @@
                         window.location.href = `/homes/listing/?id=${listing.id}`;
                     });
                 }
+            });
+
+            // Animate cards into view as they enter the viewport
+            const cardObserver = new IntersectionObserver((entries) => {
+                entries.forEach((entry, i) => {
+                    if (entry.isIntersecting) {
+                        const card = entry.target;
+                        // Stagger cards within the same batch by their position in the grid
+                        const siblings = Array.from(listingsGrid.children);
+                        const idx = siblings.indexOf(card);
+                        const row = Math.floor(idx / 3);
+                        const col = idx % 3;
+                        card.style.animationDelay = `${col * 80}ms`;
+                        card.classList.add('is-visible');
+                        cardObserver.unobserve(card);
+                    }
+                });
+            }, { threshold: 0.1, rootMargin: '50px' });
+
+            listingsGrid.querySelectorAll('.listing-card').forEach(card => {
+                cardObserver.observe(card);
             });
         }
 
