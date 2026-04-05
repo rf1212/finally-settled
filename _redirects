@@ -1,1 +1,2 @@
-https://homes.finallysettled.com/ /homes/ 301
+# Host-based redirects handled by functions/_middleware.js
+# Cloudflare Pages _redirects only supports path-based rules
