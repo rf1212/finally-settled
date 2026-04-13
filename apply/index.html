@@ -4,11 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Start Your Pre-Approval | Finally Settled</title>
+<meta name="description" content="Apply for owner financing in minutes. No bank needed. Finally Settled helps you buy a home in Alabama and Georgia without a traditional mortgage.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   color: #222;
@@ -19,6 +21,8 @@ body {
 a { text-decoration: none; color: inherit; }
 ul { list-style: none; }
 .container { width: 100%; max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+
+/* === BUTTONS === */
 .btn {
   display: inline-block;
   padding: 14px 28px;
@@ -32,6 +36,8 @@ ul { list-style: none; }
 }
 .btn-primary { background: #1a4731; color: #fff; border-color: #1a4731; }
 .btn-primary:hover { background: #0f2a1d; border-color: #0f2a1d; }
+
+/* === NAV === */
 .nav {
   background: #fff;
   border-bottom: 1px solid #e5e5e5;
@@ -86,24 +92,557 @@ ul { list-style: none; }
   .nav-cta { display: none; }
   .nav-hamburger { display: flex; }
 }
-.page-content {
-  padding: 80px 0;
+
+/* === PAGE HEADER === */
+.page-header {
+  background: #1a4731;
+  color: #fff;
+  padding: 56px 0 48px;
   text-align: center;
-  min-height: 50vh;
+}
+.page-header h1 {
+  font-size: 2.4rem;
+  font-weight: 800;
+  margin-bottom: 12px;
+  line-height: 1.15;
+}
+.page-header p {
+  font-size: 1.05rem;
+  color: rgba(255,255,255,0.85);
+  max-width: 560px;
+  margin: 0 auto;
+  line-height: 1.7;
+}
+@media (max-width: 768px) {
+  .page-header { padding: 40px 0 32px; }
+  .page-header h1 { font-size: 1.75rem; }
+}
+
+/* === PROGRESS BAR === */
+.progress-wrap {
+  background: #f5f5f5;
+  border-bottom: 1px solid #e5e5e5;
+  padding: 20px 0;
+  position: sticky;
+  top: 57px;
+  z-index: 99;
+}
+.progress-steps {
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 0;
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 0 20px;
 }
-.page-content h1 {
-  font-size: 2.2rem;
+.progress-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  position: relative;
+}
+.progress-step:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  top: 16px;
+  left: calc(50% + 16px);
+  right: calc(-50% + 16px);
+  height: 2px;
+  background: #ddd;
+  transition: background 0.3s;
+}
+.progress-step.completed:not(:last-child)::after { background: #1a4731; }
+.step-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid #ddd;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #aaa;
+  transition: all 0.3s;
+  position: relative;
+  z-index: 1;
+}
+.progress-step.active .step-circle {
+  border-color: #1a4731;
+  background: #1a4731;
+  color: #fff;
+}
+.progress-step.completed .step-circle {
+  border-color: #1a4731;
+  background: #1a4731;
+  color: #fff;
+}
+.progress-step.completed .step-circle::after {
+  content: '✓';
+  font-size: 0.75rem;
+}
+.progress-step.completed .step-circle span { display: none; }
+.step-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #aaa;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+.progress-step.active .step-label { color: #1a4731; }
+.progress-step.completed .step-label { color: #1a4731; }
+@media (max-width: 480px) {
+  .step-label { display: none; }
+}
+
+/* === LAYOUT === */
+.apply-layout {
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  gap: 40px;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 48px 20px 80px;
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .apply-layout { grid-template-columns: 1fr; }
+  .apply-sidebar { order: -1; }
+}
+
+/* === FORM CARD === */
+.form-card {
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 16px;
+  overflow: hidden;
+}
+.form-step {
+  display: none;
+  padding: 40px;
+}
+.form-step.active { display: block; }
+.step-title {
+  font-size: 1.3rem;
   font-weight: 800;
+  color: #111;
+  margin-bottom: 4px;
+}
+.step-desc {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 32px;
+  line-height: 1.6;
+}
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.field-row.full { grid-template-columns: 1fr; }
+.field-row.three { grid-template-columns: 1fr 1fr 1fr; }
+@media (max-width: 560px) {
+  .field-row { grid-template-columns: 1fr; }
+  .field-row.three { grid-template-columns: 1fr 1fr; }
+}
+.field { display: flex; flex-direction: column; gap: 6px; }
+label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #555;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+label .req { color: #c0392b; margin-left: 2px; }
+input[type="text"],
+input[type="email"],
+input[type="tel"],
+input[type="number"],
+select,
+textarea {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.95rem;
+  color: #222;
+  background: #fafafa;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 12px 14px;
+  outline: none;
+  width: 100%;
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+  -webkit-appearance: none;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: #1a4731;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(26, 71, 49, 0.08);
+}
+input.error, select.error, textarea.error {
+  border-color: #c0392b;
+  background: #fff5f5;
+}
+.field-error {
+  font-size: 0.78rem;
+  color: #c0392b;
+  font-weight: 500;
+  display: none;
+}
+.field-error.visible { display: block; }
+textarea { resize: vertical; min-height: 90px; }
+select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23666' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; cursor: pointer; }
+.input-prefix-wrap { position: relative; }
+.input-prefix {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.95rem;
+  color: #888;
+  pointer-events: none;
+  font-weight: 500;
+}
+.input-prefix-wrap input { padding-left: 28px; }
+.field-hint {
+  font-size: 0.78rem;
+  color: #888;
+  line-height: 1.5;
+}
+
+/* === RADIO GRID === */
+.radio-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.radio-grid.three { grid-template-columns: 1fr 1fr 1fr; }
+@media (max-width: 480px) {
+  .radio-grid, .radio-grid.three { grid-template-columns: 1fr 1fr; }
+}
+.radio-option { position: relative; }
+.radio-option input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.radio-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 12px 10px;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #555;
+  cursor: pointer;
+  transition: all 0.15s;
+  line-height: 1.3;
+  min-height: 48px;
+  background: #fafafa;
+}
+.radio-option input:checked + .radio-label {
+  border-color: #1a4731;
+  background: rgba(26, 71, 49, 0.06);
+  color: #1a4731;
+  font-weight: 600;
+}
+.radio-label:hover { border-color: #1a4731; background: #fff; }
+
+/* === STEP NAV === */
+.step-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid #f0f0f0;
+}
+.btn-back {
+  background: none;
+  border: 1.5px solid #ddd;
+  border-radius: 8px;
+  padding: 11px 22px;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-back:hover { border-color: #999; color: #333; }
+.btn-next {
+  background: #1a4731;
+  border: none;
+  border-radius: 8px;
+  padding: 13px 28px;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.btn-next:hover { background: #0f2a1d; }
+.btn-next:disabled { background: #aaa; cursor: not-allowed; }
+.btn-next svg { width: 16px; height: 16px; }
+
+/* === SECTION DIVIDER === */
+.section-divider {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #1a4731;
+  margin: 28px 0 16px;
+  padding-bottom: 8px;
+  border-bottom: 1.5px solid #e8f0ec;
+}
+.section-divider:first-of-type { margin-top: 0; }
+
+/* === CONSENT === */
+.consent-box {
+  background: #f8faf9;
+  border: 1px solid #d4e6dc;
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+.consent-box p {
+  font-size: 0.82rem;
+  color: #555;
+  line-height: 1.7;
+}
+.checkbox-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-top: 16px;
+}
+.checkbox-row input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  margin-top: 2px;
+  accent-color: #1a4731;
+  cursor: pointer;
+}
+.checkbox-row label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #333;
+  text-transform: none;
+  letter-spacing: 0;
+  cursor: pointer;
+}
+
+/* === SUBMIT BUTTON === */
+.btn-submit {
+  width: 100%;
+  background: #1a4731;
+  border: none;
+  border-radius: 10px;
+  padding: 16px;
+  font-family: 'Inter', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+.btn-submit:hover { background: #0f2a1d; }
+.btn-submit:disabled { background: #aaa; cursor: not-allowed; }
+.spinner {
+  display: none;
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255,255,255,0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.btn-submit.loading .spinner { display: block; }
+.btn-submit.loading .submit-text { display: none; }
+
+/* === SUCCESS === */
+.success-screen {
+  display: none;
+  padding: 60px 40px;
+  text-align: center;
+}
+.success-screen.visible { display: block; }
+.success-icon {
+  width: 72px;
+  height: 72px;
+  background: #e8f5ee;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 24px;
+}
+.success-icon svg { width: 36px; height: 36px; color: #1a4731; }
+.success-screen h2 {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #111;
+  margin-bottom: 12px;
+}
+.success-screen p {
+  font-size: 1rem;
+  color: #555;
+  line-height: 1.7;
+  max-width: 400px;
+  margin: 0 auto 32px;
+}
+.success-steps {
+  background: #f8faf9;
+  border-radius: 12px;
+  padding: 24px;
+  text-align: left;
+  max-width: 380px;
+  margin: 0 auto 32px;
+}
+.success-steps h4 {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   color: #1a4731;
   margin-bottom: 16px;
 }
-.page-content p {
-  font-size: 1.1rem;
+.success-step-item {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+.success-step-item:last-child { margin-bottom: 0; }
+.ss-dot {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #1a4731;
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.success-step-item span {
+  font-size: 0.88rem;
+  color: #444;
+  line-height: 1.5;
+}
+
+/* === SIDEBAR === */
+.apply-sidebar { display: flex; flex-direction: column; gap: 20px; }
+.sidebar-card {
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 14px;
+  padding: 24px;
+}
+.sidebar-card h3 {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #111;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.sidebar-card h3 svg { width: 18px; height: 18px; color: #1a4731; flex-shrink: 0; }
+.qualify-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.qualify-item:last-child { margin-bottom: 0; }
+.qualify-check {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #e8f5ee;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.qualify-check svg { width: 11px; height: 11px; color: #1a4731; }
+.qualify-item p { font-size: 0.88rem; color: #444; line-height: 1.5; }
+.secure-badges {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.badge-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.82rem;
   color: #555;
 }
+.badge-item svg { width: 16px; height: 16px; color: #1a4731; flex-shrink: 0; }
+.timeline-item {
+  display: flex;
+  gap: 14px;
+  margin-bottom: 16px;
+  position: relative;
+}
+.timeline-item:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  left: 14px;
+  top: 28px;
+  bottom: -8px;
+  width: 1px;
+  background: #e0e0e0;
+}
+.tl-dot {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #1a4731;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.tl-content strong {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #222;
+  margin-bottom: 2px;
+}
+.tl-content span { font-size: 0.8rem; color: #777; line-height: 1.4; }
+
+/* === FOOTER === */
 .footer {
   background: #111111;
   color: #fff;
@@ -116,24 +655,33 @@ ul { list-style: none; }
   margin-bottom: 24px;
 }
 .footer-brand { font-size: 1.15rem; font-weight: 800; }
-.footer-socials { display: flex; gap: 16px; }
-.footer-socials a { color: rgba(255,255,255,0.7); transition: color 0.2s; }
-.footer-socials a:hover { color: #fff; }
-.footer-socials svg { width: 22px; height: 22px; }
 .footer-divider { border: none; border-top: 1px solid rgba(255,255,255,0.15); margin-bottom: 24px; }
-.footer-commitment { margin-bottom: 24px; }
-.footer-commitment h4 { font-size: 0.9rem; font-weight: 700; margin-bottom: 8px; color: rgba(255,255,255,0.9); }
-.footer-commitment p { font-size: 0.85rem; line-height: 1.7; color: rgba(255,255,255,0.6); }
 .footer-legal { font-size: 0.8rem; line-height: 1.7; color: rgba(255,255,255,0.45); margin-bottom: 24px; }
 .footer-bottom { font-size: 0.8rem; color: rgba(255,255,255,0.5); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+
+/* === ERROR ALERT === */
+.form-error-alert {
+  display: none;
+  background: #fff5f5;
+  border: 1px solid #f5c0c0;
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin-bottom: 20px;
+  font-size: 0.88rem;
+  color: #c0392b;
+  font-weight: 500;
+}
+.form-error-alert.visible { display: block; }
 </style>
 </head>
 <body>
+
 <nav class="nav">
   <div class="nav-inner">
     <a href="/" class="nav-brand">Finally Settled</a>
     <div class="nav-links">
-      <a href="/request-showing">Request Showing</a>
+      <a href="/homes">Browse Homes</a>
+      <a href="/how-it-works">How It Works</a>
       <a href="/agents">Partner Agents</a>
       <a href="/blog">Blog</a>
     </div>
@@ -145,46 +693,747 @@ ul { list-style: none; }
     </button>
   </div>
   <div class="mobile-menu" id="mobileMenu">
-    <a href="/request-showing">Request Showing</a>
+    <a href="/homes">Browse Homes</a>
+    <a href="/how-it-works">How It Works</a>
     <a href="/agents">Partner Agents</a>
     <a href="/blog">Blog</a>
     <a href="/apply" class="btn btn-primary">Start Pre-Approval</a>
   </div>
-  <div class="nav-sub">Built on experience helping 500+ homebuyers</div>
+  <div class="nav-sub">No credit score minimum &nbsp;·&nbsp; No bank required &nbsp;·&nbsp; Response within 24 hours</div>
 </nav>
-<main class="page-content">
+
+<div class="page-header">
   <div class="container">
     <h1>Start Your Pre-Approval</h1>
-    <p>This page is coming soon.</p>
+    <p>Takes about 5 minutes. No impact to your credit. We'll review your application and reach out within 24 hours.</p>
   </div>
-</main>
+</div>
+
+<div class="progress-wrap">
+  <div class="progress-steps" id="progressSteps">
+    <div class="progress-step active" data-step="1">
+      <div class="step-circle"><span>1</span></div>
+      <div class="step-label">You</div>
+    </div>
+    <div class="progress-step" data-step="2">
+      <div class="step-circle"><span>2</span></div>
+      <div class="step-label">Income</div>
+    </div>
+    <div class="progress-step" data-step="3">
+      <div class="step-circle"><span>3</span></div>
+      <div class="step-label">Home</div>
+    </div>
+    <div class="progress-step" data-step="4">
+      <div class="step-circle"><span>4</span></div>
+      <div class="step-label">Confirm</div>
+    </div>
+  </div>
+</div>
+
+<div class="apply-layout">
+
+  <!-- FORM -->
+  <div>
+    <div class="form-card">
+
+      <!-- STEP 1: Personal Info -->
+      <div class="form-step active" id="step1">
+        <div class="step-title">Tell us about yourself</div>
+        <div class="step-desc">Basic contact information so we can reach you about your application.</div>
+
+        <div class="form-error-alert" id="errorAlert1"></div>
+
+        <div class="section-divider">Contact Information</div>
+        <div class="field-row">
+          <div class="field">
+            <label for="firstName">First Name <span class="req">*</span></label>
+            <input type="text" id="firstName" name="firstName" placeholder="John" autocomplete="given-name">
+            <div class="field-error" id="err-firstName">Please enter your first name.</div>
+          </div>
+          <div class="field">
+            <label for="lastName">Last Name <span class="req">*</span></label>
+            <input type="text" id="lastName" name="lastName" placeholder="Smith" autocomplete="family-name">
+            <div class="field-error" id="err-lastName">Please enter your last name.</div>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="email">Email Address <span class="req">*</span></label>
+            <input type="email" id="email" name="email" placeholder="john@example.com" autocomplete="email">
+            <div class="field-error" id="err-email">Please enter a valid email.</div>
+          </div>
+          <div class="field">
+            <label for="phone">Phone Number <span class="req">*</span></label>
+            <input type="tel" id="phone" name="phone" placeholder="(555) 555-5555" autocomplete="tel">
+            <div class="field-error" id="err-phone">Please enter your phone number.</div>
+          </div>
+        </div>
+
+        <div class="section-divider">Current Living Situation</div>
+        <div class="field-row full">
+          <div class="field">
+            <label>Do you currently rent or own? <span class="req">*</span></label>
+            <div class="radio-grid three">
+              <div class="radio-option">
+                <input type="radio" name="housingStatus" id="hs_rent" value="Renting">
+                <label class="radio-label" for="hs_rent">Renting</label>
+              </div>
+              <div class="radio-option">
+                <input type="radio" name="housingStatus" id="hs_own" value="Own">
+                <label class="radio-label" for="hs_own">Own</label>
+              </div>
+              <div class="radio-option">
+                <input type="radio" name="housingStatus" id="hs_family" value="Living with Family">
+                <label class="radio-label" for="hs_family">With Family</label>
+              </div>
+            </div>
+            <div class="field-error" id="err-housingStatus">Please select your current situation.</div>
+          </div>
+        </div>
+
+        <div class="field-row full">
+          <div class="field">
+            <label>How many people will live in the home? <span class="req">*</span></label>
+            <div class="radio-grid">
+              <div class="radio-option">
+                <input type="radio" name="occupants" id="occ1" value="1">
+                <label class="radio-label" for="occ1">Just me</label>
+              </div>
+              <div class="radio-option">
+                <input type="radio" name="occupants" id="occ2" value="2">
+                <label class="radio-label" for="occ2">2 people</label>
+              </div>
+              <div class="radio-option">
+                <input type="radio" name="occupants" id="occ3" value="3-4">
+                <label class="radio-label" for="occ3">3–4 people</label>
+              </div>
+              <div class="radio-option">
+                <input type="radio" name="occupants" id="occ4" value="5+">
+                <label class="radio-label" for="occ4">5+ people</label>
+              </div>
+            </div>
+            <div class="field-error" id="err-occupants">Please select number of occupants.</div>
+          </div>
+        </div>
+
+        <div class="step-nav">
+          <div></div>
+          <button class="btn-next" onclick="nextStep(1)">
+            Continue
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- STEP 2: Employment & Income -->
+      <div class="form-step" id="step2">
+        <div class="step-title">Employment & Income</div>
+        <div class="step-desc">We use this to confirm your ability to make consistent monthly payments — not to judge you.</div>
+
+        <div class="form-error-alert" id="errorAlert2"></div>
+
+        <div class="section-divider">Employment</div>
+        <div class="field-row full">
+          <div class="field">
+            <label>Employment Status <span class="req">*</span></label>
+            <div class="radio-grid">
+              <div class="radio-option">
+                <input type="radio" name="employmentStatus" id="emp_full" value="Full-Time Employed">
+                <label class="radio-label" for="emp_full">Full-Time</label>
+              </div>
+              <div class="radio-option">
+                <input type="radio" name="employmentStatus" id="emp_part" value="Part-Time Employed">
+                <label class="radio-label" for="emp_part">Part-Time</label>
+              </div>
+              <div class="radio-option">
+                <input type="radio" name="employmentStatus" id="emp_self" value="Self-Employed">
+                <label class="radio-label" for="emp_self">Self-Employed</label>
+              </div>
+              <div class="radio-option">
+                <input type="radio" name="employmentStatus" id="emp_other" value="Other/Fixed Income">
+                <label class="radio-label" for="emp_other">Fixed Income</label>
+              </div>
+            </div>
+            <div class="field-error" id="err-employmentStatus">Please select your employment status.</div>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="employer">Employer / Source of Income <span class="req">*</span></label>
+            <input type="text" id="employer" name="employer" placeholder="Company name or source">
+            <div class="field-error" id="err-employer">Please enter your employer or income source.</div>
+          </div>
+          <div class="field">
+            <label for="jobTitle">Job Title / Role</label>
+            <input type="text" id="jobTitle" name="jobTitle" placeholder="e.g. Warehouse Associate">
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="yearsEmployed">Years at Current Job</label>
+            <select id="yearsEmployed" name="yearsEmployed">
+              <option value="">Select</option>
+              <option>Less than 1 year</option>
+              <option>1–2 years</option>
+              <option>3–5 years</option>
+              <option>5+ years</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="monthlyIncome">Gross Monthly Income <span class="req">*</span></label>
+            <div class="input-prefix-wrap">
+              <span class="input-prefix">$</span>
+              <input type="number" id="monthlyIncome" name="monthlyIncome" placeholder="3,500" min="0">
+            </div>
+            <div class="field-error" id="err-monthlyIncome">Please enter your monthly income.</div>
+          </div>
+        </div>
+
+        <div class="section-divider">Co-Applicant (Optional)</div>
+        <div class="field-row full">
+          <div class="field">
+            <label>Will you have a co-applicant?</label>
+            <div class="radio-grid">
+              <div class="radio-option">
+                <input type="radio" name="hasCoApplicant" id="co_yes" value="Yes" onchange="toggleCoApplicant(true)">
+                <label class="radio-label" for="co_yes">Yes</label>
+              </div>
+              <div class="radio-option">
+                <input type="radio" name="hasCoApplicant" id="co_no" value="No" onchange="toggleCoApplicant(false)" checked>
+                <label class="radio-label" for="co_no">No</label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="coApplicantFields" style="display:none;">
+          <div class="field-row">
+            <div class="field">
+              <label for="coFirstName">Co-Applicant First Name</label>
+              <input type="text" id="coFirstName" name="coFirstName" placeholder="First name">
+            </div>
+            <div class="field">
+              <label for="coLastName">Co-Applicant Last Name</label>
+              <input type="text" id="coLastName" name="coLastName" placeholder="Last name">
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label for="coIncome">Co-Applicant Monthly Income</label>
+              <div class="input-prefix-wrap">
+                <span class="input-prefix">$</span>
+                <input type="number" id="coIncome" name="coIncome" placeholder="2,000" min="0">
+              </div>
+            </div>
+            <div class="field">
+              <label for="coEmployer">Co-Applicant Employer</label>
+              <input type="text" id="coEmployer" name="coEmployer" placeholder="Employer or income source">
+            </div>
+          </div>
+        </div>
+
+        <div class="step-nav">
+          <button class="btn-back" onclick="prevStep(2)">← Back</button>
+          <button class="btn-next" onclick="nextStep(2)">
+            Continue
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- STEP 3: Home Preferences -->
+      <div class="form-step" id="step3">
+        <div class="step-title">Your Home Preferences</div>
+        <div class="step-desc">Tell us what you're looking for. You'll browse and pick from available homes — we'll purchase it on your behalf.</div>
+
+        <div class="form-error-alert" id="errorAlert3"></div>
+
+        <div class="section-divider">Location & Budget</div>
+        <div class="field-row full">
+          <div class="field">
+            <label>Preferred State <span class="req">*</span></label>
+            <div class="radio-grid">
+              <div class="radio-option">
+                <input type="radio" name="preferredState" id="st_al" value="Alabama">
+                <label class="radio-label" for="st_al">Alabama</label>
+              </div>
+              <div class="radio-option">
+                <input type="radio" name="preferredState" id="st_ga" value="Georgia">
+                <label class="radio-label" for="st_ga">Georgia</label>
+              </div>
+              <div class="radio-option">
+                <input type="radio" name="preferredState" id="st_la" value="Louisiana">
+                <label class="radio-label" for="st_la">Louisiana</label>
+              </div>
+              <div class="radio-option">
+                <input type="radio" name="preferredState" id="st_open" value="Open to Any">
+                <label class="radio-label" for="st_open">Open to Any</label>
+              </div>
+            </div>
+            <div class="field-error" id="err-preferredState">Please select a preferred state.</div>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="preferredCity">Preferred City / Area</label>
+            <input type="text" id="preferredCity" name="preferredCity" placeholder="e.g. Birmingham, Huntsville">
+          </div>
+          <div class="field">
+            <label for="maxPrice">Max Home Price <span class="req">*</span></label>
+            <select id="maxPrice" name="maxPrice">
+              <option value="">Select range</option>
+              <option value="Under $75,000">Under $75,000</option>
+              <option value="$75,000 – $100,000">$75,000 – $100,000</option>
+              <option value="$100,000 – $125,000">$100,000 – $125,000</option>
+              <option value="$125,000 – $150,000">$125,000 – $150,000</option>
+              <option value="$150,000 – $200,000">$150,000 – $200,000</option>
+              <option value="$200,000+">$200,000+</option>
+            </select>
+            <div class="field-error" id="err-maxPrice">Please select a price range.</div>
+          </div>
+        </div>
+
+        <div class="section-divider">Down Payment & Timeline</div>
+        <div class="field-row">
+          <div class="field">
+            <label for="downPayment">Available Down Payment <span class="req">*</span></label>
+            <select id="downPayment" name="downPayment">
+              <option value="">Select amount</option>
+              <option value="Under $10,000">Under $10,000</option>
+              <option value="$10,000 – $15,000">$10,000 – $15,000</option>
+              <option value="$15,000 – $20,000">$15,000 – $20,000</option>
+              <option value="$20,000 – $30,000">$20,000 – $30,000</option>
+              <option value="$30,000+">$30,000+</option>
+            </select>
+            <div class="field-hint" style="margin-top:4px;">Minimum down payment is 20% of home price.</div>
+            <div class="field-error" id="err-downPayment">Please select your available down payment.</div>
+          </div>
+          <div class="field">
+            <label for="moveTimeline">Move-In Timeline <span class="req">*</span></label>
+            <select id="moveTimeline" name="moveTimeline">
+              <option value="">Select timeline</option>
+              <option value="ASAP">As soon as possible</option>
+              <option value="1-3 months">1–3 months</option>
+              <option value="3-6 months">3–6 months</option>
+              <option value="6+ months">6+ months</option>
+            </select>
+            <div class="field-error" id="err-moveTimeline">Please select your move-in timeline.</div>
+          </div>
+        </div>
+
+        <div class="section-divider">Home Details</div>
+        <div class="field-row">
+          <div class="field">
+            <label>Minimum Bedrooms</label>
+            <div class="radio-grid three">
+              <div class="radio-option">
+                <input type="radio" name="minBeds" id="bed2" value="2">
+                <label class="radio-label" for="bed2">2 bed</label>
+              </div>
+              <div class="radio-option">
+                <input type="radio" name="minBeds" id="bed3" value="3">
+                <label class="radio-label" for="bed3">3 bed</label>
+              </div>
+              <div class="radio-option">
+                <input type="radio" name="minBeds" id="bed4" value="4+">
+                <label class="radio-label" for="bed4">4+ bed</label>
+              </div>
+            </div>
+          </div>
+          <div class="field">
+            <label>Minimum Bathrooms</label>
+            <div class="radio-grid three">
+              <div class="radio-option">
+                <input type="radio" name="minBaths" id="bath1" value="1">
+                <label class="radio-label" for="bath1">1 bath</label>
+              </div>
+              <div class="radio-option">
+                <input type="radio" name="minBaths" id="bath2" value="2">
+                <label class="radio-label" for="bath2">2 bath</label>
+              </div>
+              <div class="radio-option">
+                <input type="radio" name="minBaths" id="bath3" value="3+">
+                <label class="radio-label" for="bath3">3+ bath</label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="field-row full" style="margin-top:4px;">
+          <div class="field">
+            <label for="specificHome">Do you have a specific home in mind?</label>
+            <input type="text" id="specificHome" name="specificHome" placeholder="Address or MLS# (optional)">
+          </div>
+        </div>
+
+        <div class="field-row full">
+          <div class="field">
+            <label for="additionalNotes">Anything else we should know?</label>
+            <textarea id="additionalNotes" name="additionalNotes" placeholder="Special needs, questions, or anything that would help us find the right home for you..."></textarea>
+          </div>
+        </div>
+
+        <div class="step-nav">
+          <button class="btn-back" onclick="prevStep(3)">← Back</button>
+          <button class="btn-next" onclick="nextStep(3)">
+            Review Application
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- STEP 4: Review & Submit -->
+      <div class="form-step" id="step4">
+        <div class="step-title">Review & Submit</div>
+        <div class="step-desc">Confirm your information below, then submit. We'll review and contact you within 24 hours.</div>
+
+        <div class="form-error-alert" id="errorAlert4"></div>
+
+        <div id="reviewSummary" style="background:#f8faf9;border-radius:10px;padding:20px;margin-bottom:24px;font-size:0.88rem;line-height:1.7;color:#444;"></div>
+
+        <div class="consent-box">
+          <p>By submitting this application, you acknowledge that Finally Settled is not a bank, mortgage lender, or licensed financial advisor. All financing is provided through owner-financing agreements (Bond for Deed / Contract for Title) in compliance with applicable state law. Submitting this form does not guarantee approval or obligate either party to complete a transaction. You will not be charged any fee for this pre-approval review.</p>
+          <div class="checkbox-row">
+            <input type="checkbox" id="consentAgree" name="consentAgree">
+            <label for="consentAgree">I understand and agree to the above. I consent to be contacted by Finally Settled regarding my application.</label>
+          </div>
+          <div class="field-error" id="err-consent" style="margin-top:8px;">Please read and agree to continue.</div>
+        </div>
+
+        <button class="btn-submit" id="submitBtn" onclick="submitApplication()">
+          <span class="submit-text">Submit My Application</span>
+          <div class="spinner"></div>
+        </button>
+
+        <div class="step-nav" style="border-top:none;margin-top:12px;padding-top:0;">
+          <button class="btn-back" onclick="prevStep(4)">← Back</button>
+          <div></div>
+        </div>
+      </div>
+
+      <!-- SUCCESS -->
+      <div class="success-screen" id="successScreen">
+        <div class="success-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <h2>Application Submitted!</h2>
+        <p>We've received your pre-approval application and will review it within <strong>24 hours</strong>. Check your email for a confirmation.</p>
+        <div class="success-steps">
+          <h4>What Happens Next</h4>
+          <div class="success-step-item">
+            <div class="ss-dot">1</div>
+            <span>We review your application and confirm you meet our requirements.</span>
+          </div>
+          <div class="success-step-item">
+            <div class="ss-dot">2</div>
+            <span>We reach out within 24 hours to discuss your home preferences.</span>
+          </div>
+          <div class="success-step-item">
+            <div class="ss-dot">3</div>
+            <span>You pick a home from our listings — we purchase it and structure your contract.</span>
+          </div>
+          <div class="success-step-item">
+            <div class="ss-dot">4</div>
+            <span>Sign your agreement, pay your down payment, and move in.</span>
+          </div>
+        </div>
+        <a href="/homes" class="btn btn-primary">Browse Available Homes</a>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- SIDEBAR -->
+  <div class="apply-sidebar">
+
+    <div class="sidebar-card">
+      <h3>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        Who Qualifies
+      </h3>
+      <div class="qualify-item">
+        <div class="qualify-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <p>Any credit score — we don't pull your credit</p>
+      </div>
+      <div class="qualify-item">
+        <div class="qualify-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <p>Steady income — employment, self-employment, or fixed income</p>
+      </div>
+      <div class="qualify-item">
+        <div class="qualify-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <p>20% down payment available at closing</p>
+      </div>
+      <div class="qualify-item">
+        <div class="qualify-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <p>Looking to buy in Alabama, Georgia, or Louisiana</p>
+      </div>
+    </div>
+
+    <div class="sidebar-card">
+      <h3>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        How It Works
+      </h3>
+      <div class="timeline-item">
+        <div class="tl-dot">1</div>
+        <div class="tl-content">
+          <strong>Apply</strong>
+          <span>Submit this 5-minute form. No credit check.</span>
+        </div>
+      </div>
+      <div class="timeline-item">
+        <div class="tl-dot">2</div>
+        <div class="tl-content">
+          <strong>Get Approved</strong>
+          <span>We review and confirm within 24 hours.</span>
+        </div>
+      </div>
+      <div class="timeline-item">
+        <div class="tl-dot">3</div>
+        <div class="tl-content">
+          <strong>Pick Your Home</strong>
+          <span>Browse our listings — you choose the property.</span>
+        </div>
+      </div>
+      <div class="timeline-item">
+        <div class="tl-dot">4</div>
+        <div class="tl-content">
+          <strong>Move In</strong>
+          <span>Sign your contract, pay down payment, get your keys.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-card">
+      <h3>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+        Your Information Is Safe
+      </h3>
+      <div class="secure-badges">
+        <div class="badge-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          Encrypted form submission
+        </div>
+        <div class="badge-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          No credit pull — ever
+        </div>
+        <div class="badge-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.67A2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92z"/></svg>
+          We contact you — not spam
+        </div>
+        <div class="badge-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Response within 24 hours
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
 <footer class="footer">
   <div class="container">
     <div class="footer-top">
       <div class="footer-brand">Finally Settled</div>
-      <div class="footer-socials">
-        <a href="https://www.facebook.com/finallysettled" target="_blank" rel="noopener" aria-label="Facebook"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg></a>
-        <a href="https://twitter.com/finallysettled" target="_blank" rel="noopener" aria-label="Twitter / X"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a>
-        <a href="https://www.instagram.com/finallysettled" target="_blank" rel="noopener" aria-label="Instagram"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg></a>
-      </div>
     </div>
     <hr class="footer-divider">
-    <div class="footer-commitment">
-      <h4>Our Commitment</h4>
-      <p>At Finally Settled, we believe everyone deserves a fair shot at homeownership &mdash; regardless of credit score or past hardships. We're committed to operating with honesty, transparency, and compassion, providing clear terms, fair pricing, and realistic pathways to ownership. Every applicant is treated with respect, every contract is written in plain English, and every home is offered with the goal of helping our buyers build long-term stability and pride of ownership.</p>
-    </div>
-    <p class="footer-legal">Finally Settled is not a bank, mortgage company, or traditional lender. All homes are made available through Owner Financing, Lease-Option, or Bond-for-Title agreements in accordance with applicable state laws. Finally Settled does not provide mortgage loans, credit repair services, or legal advice. All financial and legal obligations between buyer and seller are documented in writing before move-in. Buyers are encouraged to review all contracts with an independent real estate attorney or advisor before signing. Approval is not guaranteed, and all applicants must demonstrate the ability to make consistent monthly payments.</p>
+    <p class="footer-legal">Finally Settled is not a bank, mortgage company, or traditional lender. All homes are made available through Owner Financing, Lease-Option, or Bond-for-Title agreements in accordance with applicable state laws. Buyers are encouraged to review all contracts with an independent real estate attorney before signing. Approval is not guaranteed.</p>
     <div class="footer-bottom">
       <span>Equal Housing Opportunity</span>
       <span>Finally Settled &copy; 2025</span>
     </div>
   </div>
 </footer>
+
 <script>
+let currentStep = 1;
+const totalSteps = 4;
+
 function toggleMobileMenu() {
   document.getElementById('mobileMenu').classList.toggle('open');
 }
+
+function toggleCoApplicant(show) {
+  document.getElementById('coApplicantFields').style.display = show ? 'block' : 'none';
+}
+
+function updateProgress(step) {
+  document.querySelectorAll('.progress-step').forEach((el, i) => {
+    el.classList.remove('active','completed');
+    if (i + 1 < step) el.classList.add('completed');
+    if (i + 1 === step) el.classList.add('active');
+  });
+}
+
+function showStep(step) {
+  document.querySelectorAll('.form-step').forEach(el => el.classList.remove('active'));
+  document.getElementById('step' + step).classList.add('active');
+  currentStep = step;
+  updateProgress(step);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function clearErrors(step) {
+  const el = document.getElementById('errorAlert' + step);
+  if (el) { el.style.display = 'none'; el.textContent = ''; }
+  document.querySelectorAll('.error').forEach(e => e.classList.remove('error'));
+  document.querySelectorAll('.field-error.visible').forEach(e => e.classList.remove('visible'));
+}
+
+function showFieldError(id, show) {
+  const el = document.getElementById('err-' + id);
+  const input = document.getElementById(id) || document.querySelector('[name="' + id + '"]');
+  if (el) el.classList.toggle('visible', show);
+  if (input) input.classList.toggle('error', show);
+}
+
+function getRadio(name) {
+  const el = document.querySelector('input[name="' + name + '"]:checked');
+  return el ? el.value : '';
+}
+
+function validateStep(step) {
+  clearErrors(step);
+  let valid = true;
+
+  if (step === 1) {
+    if (!document.getElementById('firstName').value.trim()) { showFieldError('firstName', true); valid = false; }
+    if (!document.getElementById('lastName').value.trim()) { showFieldError('lastName', true); valid = false; }
+    const email = document.getElementById('email').value.trim();
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showFieldError('email', true); valid = false; }
+    if (!document.getElementById('phone').value.trim()) { showFieldError('phone', true); valid = false; }
+    if (!getRadio('housingStatus')) { showFieldError('housingStatus', true); valid = false; }
+    if (!getRadio('occupants')) { showFieldError('occupants', true); valid = false; }
+  }
+
+  if (step === 2) {
+    if (!getRadio('employmentStatus')) { showFieldError('employmentStatus', true); valid = false; }
+    if (!document.getElementById('employer').value.trim()) { showFieldError('employer', true); valid = false; }
+    if (!document.getElementById('monthlyIncome').value) { showFieldError('monthlyIncome', true); valid = false; }
+  }
+
+  if (step === 3) {
+    if (!getRadio('preferredState')) { showFieldError('preferredState', true); valid = false; }
+    if (!document.getElementById('maxPrice').value) { showFieldError('maxPrice', true); valid = false; }
+    if (!document.getElementById('downPayment').value) { showFieldError('downPayment', true); valid = false; }
+    if (!document.getElementById('moveTimeline').value) { showFieldError('moveTimeline', true); valid = false; }
+  }
+
+  return valid;
+}
+
+function buildReview() {
+  const val = id => document.getElementById(id)?.value || '';
+  const radio = name => getRadio(name) || '—';
+  const coApp = getRadio('hasCoApplicant') === 'Yes';
+
+  const rows = [
+    ['Name', `${val('firstName')} ${val('lastName')}`],
+    ['Email', val('email')],
+    ['Phone', val('phone')],
+    ['Current Housing', radio('housingStatus')],
+    ['Occupants', radio('occupants')],
+    ['Employment', radio('employmentStatus')],
+    ['Employer', val('employer')],
+    ['Monthly Income', val('monthlyIncome') ? `$${Number(val('monthlyIncome')).toLocaleString()}` : '—'],
+    coApp ? ['Co-Applicant', `${val('coFirstName')} ${val('coLastName')}`] : null,
+    ['Preferred State', radio('preferredState')],
+    ['Max Price', val('maxPrice') || '—'],
+    ['Down Payment', val('downPayment') || '—'],
+    ['Move-In Timeline', val('moveTimeline') || '—'],
+    val('preferredCity') ? ['Preferred Area', val('preferredCity')] : null,
+    val('specificHome') ? ['Specific Home', val('specificHome')] : null,
+  ].filter(Boolean);
+
+  return '<table style="width:100%;border-collapse:collapse;">' +
+    rows.map(([k, v]) =>
+      `<tr><td style="padding:5px 8px 5px 0;font-weight:600;color:#555;font-size:0.82rem;white-space:nowrap;vertical-align:top;text-transform:uppercase;letter-spacing:0.03em;width:40%">${k}</td><td style="padding:5px 0;font-size:0.88rem;color:#222;">${v}</td></tr>`
+    ).join('') + '</table>';
+}
+
+function nextStep(step) {
+  if (!validateStep(step)) return;
+  if (step === 3) {
+    document.getElementById('reviewSummary').innerHTML = buildReview();
+  }
+  showStep(step + 1);
+}
+
+function prevStep(step) {
+  showStep(step - 1);
+}
+
+function collectData() {
+  const val = id => document.getElementById(id)?.value?.trim() || '';
+  const radio = name => getRadio(name) || '';
+  return {
+    firstName: val('firstName'),
+    lastName: val('lastName'),
+    email: val('email'),
+    phone: val('phone'),
+    housingStatus: radio('housingStatus'),
+    occupants: radio('occupants'),
+    employmentStatus: radio('employmentStatus'),
+    employer: val('employer'),
+    jobTitle: val('jobTitle'),
+    yearsEmployed: val('yearsEmployed'),
+    monthlyIncome: val('monthlyIncome'),
+    hasCoApplicant: radio('hasCoApplicant'),
+    coFirstName: val('coFirstName'),
+    coLastName: val('coLastName'),
+    coIncome: val('coIncome'),
+    coEmployer: val('coEmployer'),
+    preferredState: radio('preferredState'),
+    preferredCity: val('preferredCity'),
+    maxPrice: val('maxPrice'),
+    downPayment: val('downPayment'),
+    moveTimeline: val('moveTimeline'),
+    minBeds: radio('minBeds'),
+    minBaths: radio('minBaths'),
+    specificHome: val('specificHome'),
+    additionalNotes: val('additionalNotes'),
+    submittedAt: new Date().toISOString(),
+    source: 'finallysettled.com/apply',
+  };
+}
+
+async function submitApplication() {
+  const consent = document.getElementById('consentAgree');
+  const errConsent = document.getElementById('err-consent');
+  if (!consent.checked) {
+    errConsent.classList.add('visible');
+    return;
+  }
+  errConsent.classList.remove('visible');
+
+  const btn = document.getElementById('submitBtn');
+  btn.classList.add('loading');
+  btn.disabled = true;
+
+  try {
+    const data = collectData();
+    const res = await fetch('/api/apply', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+
+    if (!res.ok) throw new Error('Server error');
+
+    // Show success
+    document.querySelector('.form-card').querySelectorAll('.form-step').forEach(el => el.classList.remove('active'));
+    document.getElementById('successScreen').classList.add('visible');
+    updateProgress(5); // all complete
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  } catch (err) {
+    const alert = document.getElementById('errorAlert4');
+    alert.textContent = 'Something went wrong. Please try again or email us at info@finallysettled.com.';
+    alert.style.display = 'block';
+    btn.classList.remove('loading');
+    btn.disabled = false;
+  }
+}
 </script>
-<!--End of Tawk.to Script-->
 </body>
 </html>
