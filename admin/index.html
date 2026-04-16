@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Finally Settled — Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --green: #1a4731;
+    --green-light: #e8f0ec;
+    --gold: #c9a84c;
+    --bg: #f5f5f2;
+    --white: #ffffff;
+    --text: #1c1c1e;
+    --muted: #6b7280;
+    --border: #e2e8e4;
+    --red: #dc2626;
+    --red-light: #fef2f2;
+    --amber: #d97706;
+    --amber-light: #fffbeb;
+    --blue: #1d4ed8;
+    --blue-light: #eff6ff;
+  }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  /* ── Login Screen ── */
+  #loginScreen {
+    display: flex; align-items: center; justify-content: center;
+    min-height: 100vh; padding: 24px;
+  }
+  .login-card {
+    background: var(--white); border-radius: 16px; padding: 48px 40px;
+    width: 100%; max-width: 400px; box-shadow: 0 4px 24px rgba(0,0,0,.08);
+    text-align: center;
+  }
+  .login-logo { font-size: 28px; font-weight: 700; color: var(--green); margin-bottom: 6px; }
+  .login-sub { color: var(--muted); font-size: 14px; margin-bottom: 32px; }
+  .login-card input {
+    width: 100%; padding: 12px 16px; border: 1.5px solid var(--border);
+    border-radius: 8px; font-size: 16px; font-family: inherit;
+    margin-bottom: 16px; outline: none; transition: border-color .2s;
+  }
+  .login-card input:focus { border-color: var(--green); }
+  .login-btn {
+    width: 100%; padding: 14px; background: var(--green); color: #fff;
+    border: none; border-radius: 8px; font-size: 16px; font-weight: 600;
+    cursor: pointer; font-family: inherit; transition: background .2s;
+  }
+  .login-btn:hover { background: #0f2a1d; }
+  .login-error { color: var(--red); font-size: 13px; margin-top: 10px; display: none; }
+
+  /* ── App Shell ── */
+  #appShell { display: none; }
+  .topbar {
+    background: var(--green); color: #fff; padding: 0 32px;
+    height: 56px; display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .topbar-brand { font-size: 16px; font-weight: 700; letter-spacing: -.2px; }
+  .topbar-badge { font-size: 11px; background: rgba(255,255,255,.2); padding: 2px 8px; border-radius: 20px; }
+  .topbar-right { display: flex; gap: 16px; align-items: center; }
+  .topbar-right button {
+    background: rgba(255,255,255,.15); border: none; color: #fff; padding: 6px 14px;
+    border-radius: 6px; cursor: pointer; font-size: 13px; font-family: inherit;
+  }
+  .topbar-right button:hover { background: rgba(255,255,255,.25); }
+
+  .main { max-width: 1100px; margin: 0 auto; padding: 32px 24px; }
+
+  /* ── Tabs ── */
+  .tabs { display: flex; gap: 4px; margin-bottom: 28px; border-bottom: 2px solid var(--border); }
+  .tab {
+    padding: 10px 20px; font-size: 14px; font-weight: 500; cursor: pointer;
+    border: none; background: none; color: var(--muted); border-bottom: 3px solid transparent;
+    margin-bottom: -2px; font-family: inherit; transition: all .2s;
+  }
+  .tab.active { color: var(--green); border-bottom-color: var(--green); }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ── Deal Qualifier ── */
+  .qualifier-grid { display: grid; grid-template-columns: 380px 1fr; gap: 24px; }
+  @media (max-width: 860px) { .qualifier-grid { grid-template-columns: 1fr; } }
+
+  .card {
+    background: var(--white); border-radius: 12px; padding: 24px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.06);
+  }
+  .card-title { font-size: 15px; font-weight: 600; margin-bottom: 20px; color: var(--green); }
+
+  .form-group { margin-bottom: 16px; }
+  .form-group label { display: block; font-size: 13px; font-weight: 500; color: var(--muted); margin-bottom: 6px; }
+  .form-group input, .form-group select {
+    width: 100%; padding: 10px 12px; border: 1.5px solid var(--border);
+    border-radius: 8px; font-size: 14px; font-family: inherit; outline: none;
+    transition: border-color .2s;
+  }
+  .form-group input:focus, .form-group select:focus { border-color: var(--green); }
+  .input-prefix { position: relative; }
+  .input-prefix span {
+    position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+    color: var(--muted); font-size: 14px; pointer-events: none;
+  }
+  .input-prefix input { padding-left: 24px; }
+
+  .btn-run {
+    width: 100%; padding: 13px; background: var(--green); color: #fff;
+    border: none; border-radius: 8px; font-size: 15px; font-weight: 600;
+    cursor: pointer; font-family: inherit; transition: background .2s; margin-top: 8px;
+  }
+  .btn-run:hover { background: #0f2a1d; }
+  .btn-run:disabled { background: #9ca3af; cursor: not-allowed; }
+
+  .divider { height: 1px; background: var(--border); margin: 20px 0; }
+
+  /* ── Result Cards ── */
+  .decision-banner {
+    padding: 18px 20px; border-radius: 10px; margin-bottom: 20px;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .decision-banner.approved { background: #ecfdf5; border: 1.5px solid #6ee7b7; }
+  .decision-banner.negotiate { background: var(--amber-light); border: 1.5px solid #fcd34d; }
+  .decision-banner.declined { background: var(--red-light); border: 1.5px solid #fca5a5; }
+  .decision-icon { font-size: 28px; }
+  .decision-label { font-size: 16px; font-weight: 700; }
+  .decision-sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
+
+  .metrics-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+  .metric-card { background: var(--bg); border-radius: 8px; padding: 14px; text-align: center; }
+  .metric-val { font-size: 22px; font-weight: 700; color: var(--green); }
+  .metric-lbl { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  .breakdown { font-size: 13px; }
+  .breakdown-row { display: flex; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid var(--border); }
+  .breakdown-row:last-child { border-bottom: none; font-weight: 600; }
+  .breakdown-row.total { padding-top: 10px; font-size: 14px; }
+
+  .flags-list { list-style: none; }
+  .flags-list li {
+    padding: 8px 12px; border-radius: 6px; font-size: 13px;
+    margin-bottom: 6px; display: flex; align-items: center; gap: 8px;
+  }
+  .flag-high { background: var(--red-light); color: var(--red); }
+  .flag-med  { background: var(--amber-light); color: var(--amber); }
+  .flag-low  { background: var(--blue-light); color: var(--blue); }
+
+  .action-row { display: flex; gap: 10px; margin-top: 20px; }
+  .btn-approve {
+    flex: 1; padding: 12px; background: #065f46; color: #fff;
+    border: none; border-radius: 8px; font-size: 14px; font-weight: 600;
+    cursor: pointer; font-family: inherit;
+  }
+  .btn-decline {
+    flex: 1; padding: 12px; background: var(--red); color: #fff;
+    border: none; border-radius: 8px; font-size: 14px; font-weight: 600;
+    cursor: pointer; font-family: inherit;
+  }
+  .btn-email {
+    flex: 1; padding: 12px; background: var(--bg); color: var(--text);
+    border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px; font-weight: 600;
+    cursor: pointer; font-family: inherit;
+  }
+  .btn-approve:hover { background: #064e3b; }
+  .btn-decline:hover { background: #b91c1c; }
+  .btn-email:hover { background: var(--border); }
+
+  .placeholder-state {
+    text-align: center; padding: 60px 20px; color: var(--muted);
+  }
+  .placeholder-state .icon { font-size: 48px; margin-bottom: 12px; }
+  .placeholder-state p { font-size: 14px; }
+
+  /* ── Toast ── */
+  #toast {
+    position: fixed; bottom: 24px; right: 24px; background: #1c1c1e; color: #fff;
+    padding: 12px 20px; border-radius: 8px; font-size: 14px; font-weight: 500;
+    opacity: 0; transition: opacity .3s; pointer-events: none; z-index: 999;
+  }
+  #toast.show { opacity: 1; }
+
+  /* ── Pipeline tab placeholder ── */
+  .coming-soon { text-align: center; padding: 80px 20px; color: var(--muted); }
+  .coming-soon h3 { font-size: 18px; margin-bottom: 8px; color: var(--text); }
+</style>
+</head>
+<body>
+
+<!-- ── LOGIN ── -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="login-logo">Finally Settled</div>
+    <div class="login-sub">Internal Operations · Authorized Access Only</div>
+    <input type="password" id="pwInput" placeholder="Enter access code" onkeydown="if(event.key==='Enter')login()">
+    <button class="login-btn" onclick="login()">Enter</button>
+    <div class="login-error" id="loginErr">Incorrect access code.</div>
+  </div>
+</div>
+
+<!-- ── APP ── -->
+<div id="appShell">
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:12px">
+      <span class="topbar-brand">Finally Settled</span>
+      <span class="topbar-badge">Admin</span>
+    </div>
+    <div class="topbar-right">
+      <button onclick="window.open('https://airtable.com/appLmQyh1ov0NDQ58','_blank')">Airtable ↗</button>
+      <button onclick="logout()">Sign Out</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="tabs">
+      <button class="tab active" onclick="showTab('qualifier')">Deal Qualifier</button>
+      <button class="tab" onclick="showTab('pipeline')">Pipeline</button>
+    </div>
+
+    <!-- QUALIFIER TAB -->
+    <div class="tab-panel active" id="tab-qualifier">
+      <div class="qualifier-grid">
+
+        <!-- INPUT PANEL -->
+        <div>
+          <div class="card">
+            <div class="card-title">Buyer & Property</div>
+
+            <div class="form-group">
+              <label>Buyer Name or Email (auto-load from Airtable)</label>
+              <input type="text" id="buyerSearch" placeholder="Name or email..." oninput="searchBuyer()">
+            </div>
+
+            <div id="buyerFound" style="display:none; background:#ecfdf5; border:1px solid #6ee7b7; border-radius:8px; padding:12px; margin-bottom:16px; font-size:13px;">
+              <strong id="buyerFoundName"></strong><br>
+              <span id="buyerFoundDetails" style="color:#6b7280;"></span>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="form-group">
+              <label>Property Address</label>
+              <input type="text" id="propAddress" placeholder="123 Main St, Huntsville AL">
+            </div>
+
+            <div class="form-group">
+              <label>Estimated Acquisition Price</label>
+              <div class="input-prefix"><span>$</span>
+                <input type="number" id="acqPrice" placeholder="95000" min="0" step="1000" oninput="runQualifier()">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Buyer Down Payment ($)</label>
+              <div class="input-prefix"><span>$</span>
+                <input type="number" id="buyerDown" placeholder="20000" min="0" step="1000" oninput="runQualifier()">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Buyer Monthly Income ($)</label>
+              <div class="input-prefix"><span>$</span>
+                <input type="number" id="buyerIncome" placeholder="4500" min="0" oninput="runQualifier()">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Buyer Interest Rate (%)</label>
+              <input type="number" id="buyerRate" value="20" min="1" max="30" step="0.5" oninput="runQualifier()">
+            </div>
+
+            <div class="form-group">
+              <label>Your Bank Rate (%)</label>
+              <input type="number" id="bankRate" value="7.5" min="1" max="20" step="0.25" oninput="runQualifier()">
+            </div>
+
+            <div class="form-group">
+              <label>Risk Markup ($)</label>
+              <div class="input-prefix"><span>$</span>
+                <input type="number" id="markup" value="5000" min="0" step="500" oninput="runQualifier()">
+              </div>
+            </div>
+
+            <button class="btn-run" onclick="runQualifier()">Run Qualifier</button>
+          </div>
+        </div>
+
+        <!-- RESULTS PANEL -->
+        <div id="resultsPanel">
+          <div class="placeholder-state">
+            <div class="icon">🏡</div>
+            <p>Enter buyer and property details<br>to run the deal qualifier.</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- PIPELINE TAB -->
+    <div class="tab-panel" id="tab-pipeline">
+      <div class="coming-soon">
+        <h3>Pipeline View</h3>
+        <p>Application pipeline coming soon. Track leads → applications → deals in one view.</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ── Constants ──────────────────────────────────────────────────────────────
+const ADMIN_PW    = 'FS2026Admin';   // change this in CF Pages env or here
+const AT_BASE     = 'appLmQyh1ov0NDQ58';
+const AT_APP_TBL  = 'tblTgMoIGtR0y6m7O';
+const TERM        = 360;   // 30 years
+const FIXED_DRAG  = 216.25; // insurance + servicer + portfolio share + title/RMLO - escrow
+const EFF_DEFAULT = 0.19;   // 19% effective default rate
+const EVICT_COST  = 1000;
+const MAKEREADY   = 2500;
+
+let currentAppId = null;
+let currentBuyer = {};
+
+// ── Auth ───────────────────────────────────────────────────────────────────
+function login() {
+  const pw = document.getElementById('pwInput').value;
+  const stored = sessionStorage.getItem('fs_admin');
+  const correct = stored || ADMIN_PW;
+  if (pw === correct || pw === ADMIN_PW) {
+    sessionStorage.setItem('fs_auth', '1');
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('appShell').style.display = 'block';
+  } else {
+    document.getElementById('loginErr').style.display = 'block';
+  }
+}
+function logout() {
+  sessionStorage.removeItem('fs_auth');
+  location.reload();
+}
+if (sessionStorage.getItem('fs_auth') === '1') {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('appShell').style.display = 'block';
+}
+
+// ── Tabs ───────────────────────────────────────────────────────────────────
+function showTab(name) {
+  document.querySelectorAll('.tab, .tab-panel').forEach(el => el.classList.remove('active'));
+  document.querySelector(`.tab[onclick*="${name}"]`).classList.add('active');
+  document.getElementById(`tab-${name}`).classList.add('active');
+}
+
+// ── Buyer Search ───────────────────────────────────────────────────────────
+let searchTimer;
+function searchBuyer() {
+  clearTimeout(searchTimer);
+  const q = document.getElementById('buyerSearch').value.trim();
+  if (q.length < 3) { document.getElementById('buyerFound').style.display = 'none'; return; }
+  searchTimer = setTimeout(() => fetchBuyer(q), 400);
+}
+
+async function fetchBuyer(q) {
+  try {
+    const formula = encodeURIComponent(`OR(SEARCH("${q.toLowerCase()}",LOWER({First Name}&" "&{Last Name})),SEARCH("${q.toLowerCase()}",LOWER({Email})))`);
+    const r = await fetch(`/api/admin/airtable?table=${AT_APP_TBL}&filter=${formula}&max=1`, {
+      headers: { 'X-Admin-Auth': ADMIN_PW }
+    });
+    const d = await r.json();
+    if (d.records?.[0]) {
+      const rec = d.records[0].fields;
+      currentAppId = d.records[0].id;
+      currentBuyer = rec;
+      document.getElementById('buyerFoundName').textContent = `${rec['First Name'] || ''} ${rec['Last Name'] || ''}`.trim();
+      document.getElementById('buyerFoundDetails').textContent =
+        `${rec['Email'] || ''} · Down: $${Number(rec['Down Payment Amount']||0).toLocaleString()} · Income: $${Number(rec['Monthly Income']||0).toLocaleString()}/mo`;
+      document.getElementById('buyerFound').style.display = 'block';
+      // Auto-populate fields
+      if (rec['Down Payment Amount']) document.getElementById('buyerDown').value = rec['Down Payment Amount'];
+      if (rec['Monthly Income'])      document.getElementById('buyerIncome').value = rec['Monthly Income'];
+      runQualifier();
+    }
+  } catch(e) { /* non-fatal */ }
+}
+
+// ── Qualifier Math ─────────────────────────────────────────────────────────
+function calcPI(principal, annualRate, months) {
+  const r = annualRate / 100 / 12;
+  return principal * (r * Math.pow(1+r, months)) / (Math.pow(1+r, months) - 1);
+}
+
+function runQualifier() {
+  const acq      = parseFloat(document.getElementById('acqPrice').value) || 0;
+  const down     = parseFloat(document.getElementById('buyerDown').value) || 0;
+  const income   = parseFloat(document.getElementById('buyerIncome').value) || 0;
+  const bRate    = parseFloat(document.getElementById('bankRate').value) || 7.5;
+  const buyRate  = parseFloat(document.getElementById('buyerRate').value) || 20;
+  const markup   = parseFloat(document.getElementById('markup').value) || 5000;
+
+  if (!acq || !down) return;
+
+  const salePrice     = acq + markup;
+  const buyerFinanced = salePrice - down;
+  const origFee       = Math.round(buyerFinanced * 0.03);
+  const bankLoan      = acq - down;                // your bank loan = acq - buyer's down
+  const bankPI        = calcPI(bankLoan, bRate, TERM);
+  const buyerPI       = calcPI(buyerFinanced, buyRate, TERM);
+  const grossMo       = buyerPI - bankPI;
+  const netMo         = grossMo - FIXED_DRAG;
+
+  // Default cost per month amortized
+  const defaultLossPerEvent = (buyerPI * 1.5) + EVICT_COST + MAKEREADY;
+  const defaultMoCost = (EFF_DEFAULT / 12) * defaultLossPerEvent;
+  const trueNetMo = netMo - defaultMoCost;
+
+  const day1Cash = down + origFee;
+  const dti = income > 0 ? (buyerPI / income) * 100 : null;
+
+  // Flags
+  const flags = [];
+  if (down < 15000)  flags.push({ level: 'high', msg: 'Down payment under $15,000 — instant decline threshold' });
+  if (down < 17000)  flags.push({ level: 'med',  msg: 'Down payment $15K–$17K — thin margin, conditional only' });
+  if (dti && dti > 43) flags.push({ level: 'high', msg: `DTI ${dti.toFixed(0)}% — exceeds 43% conventional threshold` });
+  if (dti && dti > 35) flags.push({ level: 'med',  msg: `DTI ${dti.toFixed(0)}% — elevated, verify income stability` });
+  if (trueNetMo < 650) flags.push({ level: 'med',  msg: `Net/mo $${Math.round(trueNetMo)} below $650 floor — consider renegotiating` });
+  if (bankLoan < 0)  flags.push({ level: 'high', msg: 'Down payment exceeds acquisition price' });
+  if (currentBuyer['Active Bankruptcy or Foreclosure'] === 'Yes')
+    flags.push({ level: 'high', msg: 'Self-reported active bankruptcy or foreclosure — instant decline' });
+  if (currentBuyer['Active or Recent Lawsuits'] === 'Yes')
+    flags.push({ level: 'high', msg: 'Self-reported active or recent lawsuit — instant decline' });
+
+  // Decision
+  const hardDecline = flags.some(f => f.level === 'high');
+  const negotiate   = !hardDecline && (trueNetMo < 650 || (dti && dti > 35));
+  const decision    = hardDecline ? 'declined' : negotiate ? 'negotiate' : 'approved';
+
+  renderResults({ acq, salePrice, down, buyerFinanced, bankLoan, origFee, day1Cash,
+    bankPI, buyerPI, grossMo, netMo, trueNetMo, dti, flags, decision, buyRate, bRate });
+}
+
+function fmt(n) { return '$' + Math.round(n).toLocaleString(); }
+function fmtPct(n) { return n ? n.toFixed(1) + '%' : '—'; }
+
+function renderResults(r) {
+  const decisionData = {
+    approved:  { cls: 'approved',  icon: '✅', label: 'APPROVED', sub: 'Pending background check — ready to proceed' },
+    negotiate: { cls: 'negotiate', icon: '🟡', label: 'NEGOTIATE', sub: 'Deal can work with adjusted terms — review flags' },
+    declined:  { cls: 'declined',  icon: '⛔', label: 'DECLINED', sub: 'Hard decline — do not proceed' },
+  };
+  const d = decisionData[r.decision];
+
+  document.getElementById('resultsPanel').innerHTML = `
+    <div class="decision-banner ${d.cls}">
+      <div class="decision-icon">${d.icon}</div>
+      <div>
+        <div class="decision-label">${d.label}</div>
+        <div class="decision-sub">${d.sub}</div>
+      </div>
+    </div>
+
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <div class="metric-val">${fmt(r.trueNetMo)}</div>
+        <div class="metric-lbl">True Net/Mo</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-val">${fmt(r.trueNetMo * 12)}</div>
+        <div class="metric-lbl">Annual Net</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-val">${r.dti ? r.dti.toFixed(0)+'%' : '—'}</div>
+        <div class="metric-lbl">DTI</div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-title">Proposed Terms</div>
+      <div class="breakdown">
+        <div class="breakdown-row"><span>Acquisition price</span><span>${fmt(r.acq)}</span></div>
+        <div class="breakdown-row"><span>Risk markup</span><span>+${fmt(r.salePrice - r.acq)}</span></div>
+        <div class="breakdown-row"><span>Sale price to buyer</span><span>${fmt(r.salePrice)}</span></div>
+        <div class="breakdown-row"><span>Buyer down payment</span><span>${fmt(r.down)}</span></div>
+        <div class="breakdown-row"><span>Origination fee (3%)</span><span>${fmt(r.origFee)}</span></div>
+        <div class="breakdown-row"><span>Day 1 cash from buyer</span><span style="color:#065f46;font-weight:600">${fmt(r.day1Cash)}</span></div>
+        <div class="breakdown-row"><span>Buyer finances</span><span>${fmt(r.buyerFinanced)} @ ${r.buyRate}%</span></div>
+        <div class="breakdown-row"><span>Your bank loan</span><span>${fmt(r.bankLoan)} @ ${r.bRate}%</span></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-title">Monthly Cash Flow</div>
+      <div class="breakdown">
+        <div class="breakdown-row"><span>Buyer pays you (P&I)</span><span>${fmt(r.buyerPI)}</span></div>
+        <div class="breakdown-row"><span>You pay bank (P&I)</span><span>-${fmt(r.bankPI)}</span></div>
+        <div class="breakdown-row"><span>Gross spread</span><span>${fmt(r.grossMo)}</span></div>
+        <div class="breakdown-row"><span>Fixed costs</span><span>-$216</span></div>
+        <div class="breakdown-row"><span>Default reserve</span><span>-${fmt(r.grossMo * 0.19 / 12)}</span></div>
+        <div class="breakdown-row total"><span>True net/mo</span><span style="color:${r.trueNetMo >= 650 ? '#065f46' : '#dc2626'}">${fmt(r.trueNetMo)}</span></div>
+      </div>
+    </div>
+
+    ${r.flags.length ? `
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-title">Flags (${r.flags.length})</div>
+      <ul class="flags-list">
+        ${r.flags.map(f => `<li class="flag-${f.level}">${f.level === 'high' ? '⛔' : f.level === 'med' ? '⚠️' : 'ℹ️'} ${f.msg}</li>`).join('')}
+      </ul>
+    </div>` : ''}
+
+    <div class="action-row">
+      <button class="btn-approve" onclick="saveDecision('APPROVED PENDING BACKGROUND CHECK')">✅ Approve</button>
+      <button class="btn-decline" onclick="saveDecision('DECLINED')">⛔ Decline</button>
+      <button class="btn-email" onclick="emailSummary()">📧 Email Summary</button>
+    </div>
+  `;
+}
+
+// ── Actions ────────────────────────────────────────────────────────────────
+async function saveDecision(decision) {
+  if (!currentAppId) { showToast('No application loaded — search for a buyer first'); return; }
+  try {
+    await fetch(`/api/admin/airtable`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Auth': ADMIN_PW },
+      body: JSON.stringify({ table: AT_APP_TBL, id: currentAppId, fields: { 'Deal Decision': decision } })
+    });
+    showToast(`Saved: ${decision}`);
+  } catch(e) { showToast('Save failed — check console'); }
+}
+
+function emailSummary() {
+  const name = `${currentBuyer['First Name']||''} ${currentBuyer['Last Name']||''}`.trim() || 'Buyer';
+  const acq = document.getElementById('acqPrice').value;
+  const down = document.getElementById('buyerDown').value;
+  const subject = encodeURIComponent(`Deal Summary: ${name} — $${Number(acq).toLocaleString()} acquisition`);
+  const body = encodeURIComponent(
+    `Deal Summary — Finally Settled\n\nBuyer: ${name}\nEmail: ${currentBuyer['Email']||'—'}\nAirtable: https://airtable.com/${AT_BASE}/${AT_APP_TBL}/${currentAppId||''}\n\nAcquisition: $${Number(acq).toLocaleString()}\nDown Payment: $${Number(down).toLocaleString()}\n\nSee qualifier output for full terms.`
+  );
+  window.open(`mailto:info@rawfunds.com?subject=${subject}&body=${body}`);
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+</script>
+</body>
+</html>

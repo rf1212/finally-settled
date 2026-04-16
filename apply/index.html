@@ -1070,6 +1070,24 @@ select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.o
             <label for="additionalNotes">Anything else we should know?</label>
             <textarea id="additionalNotes" name="additionalNotes" placeholder="Special needs, questions, or anything that would help us find the right home for you..."></textarea>
           </div>
+
+          <div class="form-group">
+            <label>Do you have an active bankruptcy or foreclosure?</label>
+            <div class="radio-group">
+              <label class="radio-option"><input type="radio" name="activeBankruptcy" value="No" checked> No</label>
+              <label class="radio-option"><input type="radio" name="activeBankruptcy" value="Yes"> Yes</label>
+            </div>
+            <div class="field-error" id="err-activeBankruptcy"></div>
+          </div>
+
+          <div class="form-group">
+            <label>Do you have any active or recent lawsuits?</label>
+            <div class="radio-group">
+              <label class="radio-option"><input type="radio" name="activeLawsuit" value="No" checked> No</label>
+              <label class="radio-option"><input type="radio" name="activeLawsuit" value="Yes"> Yes</label>
+            </div>
+            <div class="field-error" id="err-activeLawsuit"></div>
+          </div>
         </div>
 
         <div class="step-nav">
@@ -1392,6 +1410,8 @@ function collectData() {
     minBaths: radio('minBaths'),
     specificHome: val('specificHome'),
     additionalNotes: val('additionalNotes'),
+    activeBankruptcy: radio('activeBankruptcy') || 'No',
+    activeLawsuit: radio('activeLawsuit') || 'No',
     submittedAt: new Date().toISOString(),
     source: 'finallysettled.com/apply',
   };
