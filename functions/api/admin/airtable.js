@@ -3,11 +3,10 @@
  * GET  /api/admin/airtable — search records
  * PATCH /api/admin/airtable — update a record
  *
- * Protected by X-Admin-Auth header matching ADMIN_PASSWORD env var
+ * Protected by X-Admin-Auth header matching required ADMIN_PASSWORD env var
  */
 
 const AIRTABLE_BASE = 'appLmQyh1ov0NDQ58';
-const ADMIN_PW_DEFAULT = 'FS2026Admin';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -21,14 +20,26 @@ const json = (data, status = 200) =>
     headers: { 'Content-Type': 'application/json', ...CORS },
   });
 
-function checkAuth(request, env) {
+function getAdminPassword(env) {
+  const password = typeof env.ADMIN_PASSWORD === 'string' ? env.ADMIN_PASSWORD.trim() : '';
+  return password || null;
+}
+
+function checkAuth(request, password) {
   const pw = request.headers.get('X-Admin-Auth');
-  const correct = env.ADMIN_PASSWORD || ADMIN_PW_DEFAULT;
-  return pw === correct;
+  return !!password && pw === password;
+}
+
+function requireConfiguredAdminPassword(env) {
+  const password = getAdminPassword(env);
+  if (!password) return { response: json({ error: 'server_misconfigured', detail: 'ADMIN_PASSWORD is required' }, 503) };
+  return { password };
 }
 
 export async function onRequestGet({ request, env }) {
-  if (!checkAuth(request, env)) return json({ error: 'unauthorized' }, 401);
+  const auth = requireConfiguredAdminPassword(env);
+  if (auth.response) return auth.response;
+  if (!checkAuth(request, auth.password)) return json({ error: 'unauthorized' }, 401);
 
   const url = new URL(request.url);
   const table  = url.searchParams.get('table');
@@ -49,12 +60,24 @@ export async function onRequestGet({ request, env }) {
 }
 
 export async function onRequestPatch({ request, env }) {
-  if (!checkAuth(request, env)) return json({ error: 'unauthorized' }, 401);
+  const auth = requireConfiguredAdminPassword(env);
+  if (auth.response) return auth.response;
+  if (!checkAuth(request, auth.password)) return json({ error: 'unauthorized' }, 401);
 
-  const body = await request.json();
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return json({ error: 'invalid_json' }, 400);
+  }
+  if (!body || typeof body !== 'object' || Array.isArray(body)) {
+    return json({ error: 'invalid_payload' }, 400);
+  }
   const { table, id, fields } = body;
 
-  if (!table || !id || !fields) return json({ error: 'table, id, fields required' }, 400);
+  if (!table || !id || !fields || typeof fields !== 'object' || Array.isArray(fields)) {
+    return json({ error: 'table, id, fields required' }, 400);
+  }
 
   const r = await fetch(`https://api.airtable.com/v0/${AIRTABLE_BASE}/${table}/${id}`, {
     method: 'PATCH',

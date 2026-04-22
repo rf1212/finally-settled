@@ -35,6 +35,70 @@ const json = (data, status = 200) =>
 const clean = (val, max = 500) =>
   typeof val === 'string' ? val.trim().slice(0, max) : String(val ?? '');
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const REQUIRED_FIELDS = [
+  ['firstName', 'firstName'],
+  ['lastName', 'lastName'],
+  ['email', 'email'],
+  ['phone', 'phone'],
+  ['preferredState', 'preferredState'],
+  ['preferredCity', 'preferredCity'],
+  ['downPayment', 'downPayment'],
+];
+
+function badRequest(error, details = {}) {
+  return json({ error, ...details }, 400);
+}
+
+function validateApplyBody(body) {
+  if (!body || typeof body !== 'object' || Array.isArray(body)) {
+    return { error: 'invalid_payload', detail: 'Request body must be a JSON object' };
+  }
+
+  const missing = REQUIRED_FIELDS
+    .filter(([field]) => clean(body[field]).length === 0)
+    .map(([, label]) => label);
+  if (missing.length) {
+    return { error: 'missing_required_fields', fields: missing };
+  }
+
+  const email = clean(body.email).toLowerCase();
+  if (!EMAIL_RE.test(email)) {
+    return { error: 'invalid_email', field: 'email' };
+  }
+
+  const downAmtRaw = clean(body.downPayment);
+  const downAmt = Number.parseFloat(downAmtRaw);
+  if (!Number.isFinite(downAmt) || downAmt < 0) {
+    return { error: 'invalid_down_payment', field: 'downPayment' };
+  }
+
+  const monthlyIncomeRaw = clean(body.monthlyIncome);
+  if (monthlyIncomeRaw) {
+    const monthlyIncome = Number.parseFloat(monthlyIncomeRaw);
+    if (!Number.isFinite(monthlyIncome) || monthlyIncome < 0) {
+      return { error: 'invalid_monthly_income', field: 'monthlyIncome' };
+    }
+  }
+
+  const coIncomeRaw = clean(body.coIncome);
+  if (coIncomeRaw) {
+    const coIncome = Number.parseFloat(coIncomeRaw);
+    if (!Number.isFinite(coIncome) || coIncome < 0) {
+      return { error: 'invalid_co_income', field: 'coIncome' };
+    }
+  }
+
+  for (const field of ['activeBankruptcy', 'activeLawsuit', 'hasCoApplicant']) {
+    const value = clean(body[field]);
+    if (value && value !== 'Yes' && value !== 'No') {
+      return { error: 'invalid_choice', field };
+    }
+  }
+
+  return null;
+}
+
 function getInstantDecision(body) {
   const down = parseFloat(body.downPayment) || 0;
   if (body.activeBankruptcy === 'Yes') return 'DECLINED — Active bankruptcy or foreclosure';
@@ -92,14 +156,28 @@ async function mlAddSubscriber(env, email, firstName, lastName, extraFields = {}
 
 export async function onRequestPost({ request, env }) {
   try {
-    const body = await request.json();
+    if (!env.AIRTABLE_API_KEY) {
+      console.error('Apply handler misconfigured: AIRTABLE_API_KEY missing');
+      return json({ error: 'server_misconfigured' }, 500);
+    }
+
+    let body;
+    try {
+      body = await request.json();
+    } catch {
+      return badRequest('invalid_json');
+    }
+
+    const validationError = validateApplyBody(body);
+    if (validationError) return badRequest(validationError.error, validationError);
 
     const firstName   = clean(body.firstName);
     const lastName    = clean(body.lastName);
     const email       = clean(body.email).toLowerCase();
     const phone       = clean(body.phone);
-    const downAmt     = parseFloat(body.downPayment) || 0;
-    const income      = parseFloat(body.monthlyIncome) || null;
+    const downAmt     = Number.parseFloat(body.downPayment);
+    const incomeRaw   = clean(body.monthlyIncome);
+    const income      = incomeRaw ? Number.parseFloat(incomeRaw) : null;
     const submittedAt = new Date().toISOString();
 
     const declineReason = getInstantDecision(body);
@@ -144,7 +222,7 @@ export async function onRequestPost({ request, env }) {
       'Has Co-Applicant':                  clean(body.hasCoApplicant),
       'Co-Applicant Name':                 body.hasCoApplicant === 'Yes'
                                              ? `${clean(body.coFirstName)} ${clean(body.coLastName)}`.trim() : '',
-      'Co-Applicant Income':               body.coIncome ? parseFloat(body.coIncome) : null,
+      'Co-Applicant Income':               clean(body.coIncome) ? Number.parseFloat(body.coIncome) : null,
       'Co-Applicant Employer':             clean(body.coEmployer),
       'Preferred State':                   clean(body.preferredState),
       'Preferred City':                    clean(body.preferredCity),
