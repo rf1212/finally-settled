@@ -10,6 +10,11 @@ Target repo:
 Goal:
 - Make GitHub the source of truth for Finally Settled by identifying live operating assets, recovering what is recoverable, and documenting what is still missing or unsafe.
 
+Historical context addendum:
+- Claude desktop/browser exports were reviewed as secondary historical evidence only
+- the exports appeared to duplicate the same conversation set
+- useful findings were deduplicated into `ops/audit/finally-settled-claude-addendum.md`
+
 ## Executive Summary
 
 The public Finally Settled site is live on Cloudflare and partially represented in GitHub, but the operating stack is split across four systems:
@@ -28,6 +33,12 @@ The repo already contains the public site root pages, `/homes` pages, and the ma
 - content-engine source artifacts referenced in Notion were not recoverable locally
 - the live admin proxy accepts the default password fallback
 - Notion pages contain plaintext secrets and operational credentials
+
+Claude export review added useful historical context, but did not overturn the live audit. The most useful additions were:
+- clearer historical intent for the `FinallySettled — Apify Listings Sync` workflow
+- stronger evidence that the missing social-engine artifacts were actually generated at some point
+- additional candidate workflow/script names for an unrecovered FFmpeg/Canva/Publer path
+- confirmation that Finally Settled also exists in the adjacent OpsCommand/Noir stack under company/noir id `18d5ce46-25af-4934-8558-68bfad07794f`
 
 ## 1. Git Repo Audit
 
@@ -232,7 +243,30 @@ Critical security finding:
 - multiple Notion pages contain plaintext secrets or tokens
 - Notion is currently being used as an unsafe secret store
 
-## 6. Local Files / Nearby Workspaces
+## 6. Claude Export Addendum
+
+Claude desktop/browser export review produced secondary historical context only. The detailed addendum lives in:
+- `ops/audit/finally-settled-claude-addendum.md`
+
+High-signal additions from Claude history:
+- the listings sync was historically specced around 34 Airtable fields, schedule `0 5 * * 2,5`, and success/failure emails to `info@rawfunds.com`
+- the user explicitly asked for a separate Airtable test table before cutover, but the live workflow now targets the production `Listings` table
+- the social engine was historically described as using `SocialImagePool` and `SocialContentQueue`, matching the live Airtable schema recovered during this audit
+- Claude history explicitly claimed delivery of:
+  - `finally-settled-content-engine-v2.json`
+  - `source-images-to-canva.py`
+  - `finally-settled-bulk-create.csv`
+  - `finally-settled-content-system.md`
+- Claude history also referenced an unrecovered FFmpeg/Canva/Publer path with:
+  - workflows `FS_Content_Select`, `FS_Generate_Static_Image_Post`, `FS_Generate_Reel_Post`
+  - scripts/assets `fs-reel-agent.py`, `ffmpeg-render-service.py`, `reel-rotating-sample.html`
+  - deploy/support files `render-service-deploy.tar.gz`, `RAILWAY_DEPLOY_INSTRUCTIONS.md`, `railway.json`, `Procfile`, `requirements.txt`
+
+Important guardrail:
+- none of those Claude-history assets were treated as authoritative without live-system or repo support
+- conflicting historical claims were recorded in the addendum instead of being merged into primary findings
+
+## 7. Local Files / Nearby Workspaces
 
 Recovered local artifacts:
 - `docs/finally-settled-homes-build-spec.md` copied from local Downloads
@@ -246,8 +280,9 @@ Findings:
 - `project-omega` contains generic Airtable/Supabase/n8n tooling and a separate Airtable base
 - `dashboard-central` appears to be OpsCommand / portfolio control-plane code
 - Notion says Finally Settled was added to OpsCommand/Supabase, but no dedicated Finally Settled Supabase migration or function files were recovered locally for this repo
+- Claude export history says `dashboard-central` previously carried an OpsCommand fix for the missing `finallysettled` -> `noirId` mapping; that is adjacent operational context, not repo-owned Finally Settled site source
 
-## 7. Supabase Audit
+## 8. Supabase Audit
 
 Direct Finally Settled repo findings:
 - no Supabase folder or migrations existed before this audit
@@ -260,13 +295,21 @@ Assessment:
 - Supabase is not currently a public-site runtime dependency for `rf1212/finally-settled`
 - Supabase appears to be an adjacent portfolio-management dependency, not a repo-owned application layer
 
-## 8. Missing or Unrecovered Assets
+## 9. Missing or Unrecovered Assets
 
 Not found locally:
 - `finally-settled-content-engine-v2.json`
 - `source-images-to-canva.py`
 - `finally-settled-bulk-create.csv`
 - `finally-settled-content-system.md`
+- `fs-reel-agent.py`
+- `ffmpeg-render-service.py`
+- `render-service-deploy.tar.gz`
+- `RAILWAY_DEPLOY_INSTRUCTIONS.md`
+- `reel-rotating-sample.html`
+- workflow exports for `FS_Content_Select`
+- workflow exports for `FS_Generate_Static_Image_Post`
+- workflow exports for `FS_Generate_Reel_Post`
 - internal deal qualifier HTML file
 - any Finally Settled-specific Supabase migrations or edge functions
 - any Cloudflare Pages config file such as `wrangler.toml`
@@ -290,3 +333,4 @@ Those issues are detailed in:
 - `ops/audit/finally-settled-asset-inventory.md`
 - `ops/audit/finally-settled-bottlenecks.md`
 - `ops/audit/finally-settled-next-actions.md`
+- `ops/audit/finally-settled-claude-addendum.md`

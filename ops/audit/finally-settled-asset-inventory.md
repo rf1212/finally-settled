@@ -37,6 +37,23 @@ Audit date: 2026-04-22
 | --- | --- | --- |
 | Notion specs and handoff pages | Notion | contain mixed operational guidance and plaintext secrets; summarized instead |
 | Telegram export references to older RawFunds/Make workflows | local Downloads | historical context, not authoritative Finally Settled source |
+| Claude desktop/browser exports | local Downloads | used only as secondary historical context; many items were stale, duplicated, or not recoverable as source artifacts |
+
+## Historical References From Claude Exports
+
+| Historical Reference | Type | Status |
+| --- | --- | --- |
+| `FinallySettled — Apify Listings Sync` / `VqLfiyi9b86A4AVb` | workflow history | matches live audit |
+| `FS_Reel_AutoDraft` / `5Fjnc5fB1dXH94vV` | workflow history | matches live audit |
+| `Finally Settled Viral Clip Factory v3` / `K63Ut64YfW8Ll6BF` | workflow history | matches live audit |
+| `FS_Content_Select` | workflow name | referenced in Claude history, not recovered |
+| `FS_Generate_Static_Image_Post` | workflow name | referenced in Claude history, not recovered |
+| `FS_Generate_Reel_Post` | workflow name | referenced in Claude history, not recovered |
+| `fs-reel-agent.py` | script | referenced in Claude history, not recovered |
+| `ffmpeg-render-service.py` | script/service | referenced in Claude history, not recovered |
+| `render-service-deploy.tar.gz` | deploy package | referenced in Claude history, not recovered |
+| `RAILWAY_DEPLOY_INSTRUCTIONS.md` | deploy doc | referenced in Claude history, not recovered |
+| `reel-rotating-sample.html` | preview asset | referenced in Claude history, not recovered |
 
 ## Missing
 
@@ -46,6 +63,14 @@ Audit date: 2026-04-22
 | `source-images-to-canva.py` | Notion social engine page | not found locally |
 | `finally-settled-bulk-create.csv` | Notion social engine page | not found locally |
 | `finally-settled-content-system.md` | Notion social engine page | not found locally |
+| `fs-reel-agent.py` | Claude reel/render history | not found locally |
+| `ffmpeg-render-service.py` | Claude reel/render history | not found locally |
+| `render-service-deploy.tar.gz` | Claude Railway deployment history | not found locally |
+| `RAILWAY_DEPLOY_INSTRUCTIONS.md` | Claude Railway deployment history | not found locally |
+| `reel-rotating-sample.html` | Claude reel/render history | not found locally |
+| `FS_Content_Select` workflow export | Claude reel/render history | not found locally |
+| `FS_Generate_Static_Image_Post` workflow export | Claude reel/render history | not found locally |
+| `FS_Generate_Reel_Post` workflow export | Claude reel/render history | not found locally |
 | internal deal qualifier HTML | Notion build log | not found locally |
 | Finally Settled-specific Supabase migrations/functions | local disk / repo | not found |
 | Cloudflare Pages config file | repo/local disk | not found |
@@ -79,6 +104,14 @@ Files found in or synced into this repo during the audit:
 - `source-images-to-canva.py`
 - `finally-settled-bulk-create.csv`
 - `finally-settled-content-system.md`
+- `fs-reel-agent.py`
+- `ffmpeg-render-service.py`
+- `render-service-deploy.tar.gz`
+- `RAILWAY_DEPLOY_INSTRUCTIONS.md`
+- `reel-rotating-sample.html`
+- workflow exports for `FS_Content_Select`
+- workflow exports for `FS_Generate_Static_Image_Post`
+- workflow exports for `FS_Generate_Reel_Post`
 - internal deal qualifier HTML
 - any Finally Settled-specific Supabase SQL/migrations/functions
 - any repo-owned Cloudflare Pages config file

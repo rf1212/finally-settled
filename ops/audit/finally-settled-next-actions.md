@@ -18,9 +18,9 @@
 
 ### 3. Social content engine is not fully recoverable
 - blocker: missing source artifacts and active/live drift
-- why it blocks launch: the content engine cannot be rebuilt from GitHub alone because key source files are missing and the active workflow points at a different Airtable base than the documented Finally Settled social tables
-- exact file/system where it lives: Notion page `Finally Settled — Social Content Engine`, live n8n workflow `K63Ut64YfW8Ll6BF`, missing files `finally-settled-content-engine-v2.json` and `source-images-to-canva.py`
-- fix required: recover the missing artifacts from the original output location or rebuild them, align the live workflow to `appLmQyh1ov0NDQ58` tables `tblCLKcbcat9jto3c` and `tblg93KZ6mhpiyg1u`, then commit the canonical versions
+- why it blocks launch: the content engine cannot be rebuilt from GitHub alone because key source files are missing, the active workflow points at a different Airtable base than the documented Finally Settled social tables, and Claude history references an additional unrecovered FFmpeg/Canva/Publer path
+- exact file/system where it lives: Notion page `Finally Settled — Social Content Engine`, live n8n workflows `K63Ut64YfW8Ll6BF` and `5Fjnc5fB1dXH94vV`, Claude addendum `ops/audit/finally-settled-claude-addendum.md`, missing files `finally-settled-content-engine-v2.json`, `source-images-to-canva.py`, `finally-settled-bulk-create.csv`, `finally-settled-content-system.md`, `fs-reel-agent.py`, and `ffmpeg-render-service.py`
+- fix required: recover or rebuild the missing artifacts, choose one canonical publishing path, align it to `appLmQyh1ov0NDQ58` tables `tblCLKcbcat9jto3c` and `tblg93KZ6mhpiyg1u`, archive the non-canonical workflows, then commit the canonical versions
 - owner: Claude
 
 ### 4. `qualify.html` is live drift and not an actual qualification form
@@ -51,10 +51,17 @@
 - fix required: rotate exposed credentials, scrub Notion pages, and replace live secret values with references to a proper secret manager or environment-variable names only
 - owner: ChatGPT
 
+### 8. Social publishing ownership is split across live workflows and historical one-off outputs
+- blocker: no single recoverable source for the Finally Settled social publishing stack
+- why it blocks launch: even after the current site repo is synced, operators still cannot tell whether the canonical social path is `Finally Settled Viral Clip Factory v3`, `FS_Reel_AutoDraft`, or the unrecovered Claude-built FFmpeg/Canva flow
+- exact file/system where it lives: live n8n workflows `K63Ut64YfW8Ll6BF` and `5Fjnc5fB1dXH94vV`, Claude addendum `ops/audit/finally-settled-claude-addendum.md`, unrecovered assets `FS_Content_Select`, `FS_Generate_Static_Image_Post`, `FS_Generate_Reel_Post`, `render-service-deploy.tar.gz`, `RAILWAY_DEPLOY_INSTRUCTIONS.md`
+- fix required: decide the supported publishing architecture, archive or export every competing workflow, and commit only the supported path plus its deployment/runbook files
+- owner: Claude
+
 ## Fastest Stabilization Path
 
 1. Kill the admin fallback password and rotate any exposed credentials.
 2. Decide the canonical buyer-intake entrypoint: `/apply`, `/qualify.html`, or both.
 3. Rebuild the n8n exports around credential objects and one Airtable base strategy.
-4. Recover or rebuild the missing social-engine source files.
+4. Recover or rebuild the missing social-engine source files and choose one canonical publishing path.
 5. Document Cloudflare Pages settings so the repo can actually recreate production.

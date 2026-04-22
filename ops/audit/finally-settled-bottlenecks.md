@@ -106,3 +106,22 @@ Why it matters:
 Impact:
 - security exposure
 - audit ambiguity because secrets are spread across docs, not isolated in a secrets manager
+
+## 8. The canonical social publishing path is still ambiguous
+
+Why it matters:
+- live evidence points to at least three different Finally Settled social paths:
+  - active `Finally Settled Viral Clip Factory v3`
+  - inactive `FS_Reel_AutoDraft`
+  - historical Claude-only references to `FS_Content_Select`, `FS_Generate_Static_Image_Post`, `FS_Generate_Reel_Post`, and `ffmpeg-render-service.py`
+- GitHub cannot become source-of-truth for social operations until one path is declared canonical and the others are retired or archived
+
+Evidence:
+- live n8n currently has active `K63Ut64YfW8Ll6BF` and inactive `5Fjnc5fB1dXH94vV`
+- Claude history references unrecovered workflow/script names plus Railway deployment artifacts for a separate render path
+- the missing artifact list still includes the claimed v2 content-engine files and the unrecovered render-service files
+
+Impact:
+- operators cannot tell which flow is safe to run
+- social publishing logic remains split across live n8n, Notion, and unrecovered Claude outputs
+- rebuilding from GitHub alone is not possible yet
