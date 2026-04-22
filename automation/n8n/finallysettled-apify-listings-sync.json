@@ -1,0 +1,1321 @@
+{
+  "updatedAt": "2026-04-01T05:35:37.473Z",
+  "createdAt": "2026-04-01T02:48:23.801Z",
+  "id": "VqLfiyi9b86A4AVb",
+  "name": "FinallySettled \u2014 Apify Listings Sync",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "id": "node_01",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        300
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 0 5 * * 2,5"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node_02",
+      "name": "Trigger Apify Run",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        280,
+        300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.apify.com/v2/actor-tasks/F2Ngv6tdXAGu8rwvb/runs?token=REDACTED",
+        "authentication": "none",
+        "options": {}
+      },
+      "notes": "Triggers the Apify scraping task. Assign your Apify HTTP Header Auth credential here."
+    },
+    {
+      "id": "node_03",
+      "name": "Extract Run ID",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        540,
+        300
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "mode": "runOnceForAllItems",
+        "jsCode": "const staticData = $getWorkflowStaticData('global');\nstaticData.pollCount = 0;\nconst response = $input.first().json;\nconst runId = response.data.id;\nreturn [{ json: { runId } }];"
+      }
+    },
+    {
+      "id": "node_04",
+      "name": "Wait 30s",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        780,
+        300
+      ],
+      "parameters": {
+        "resume": "timeInterval",
+        "amount": 30,
+        "unit": "seconds"
+      }
+    },
+    {
+      "id": "node_05",
+      "name": "Poll Run Status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1020,
+        300
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.apify.com/v2/actor-runs/{{ $json.runId }}?token=REDACTED",
+        "authentication": "none",
+        "options": {}
+      },
+      "notes": "Polls Apify run status every 30s. Assign your Apify HTTP Header Auth credential here."
+    },
+    {
+      "id": "node_06",
+      "name": "Check Status",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1260,
+        300
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "mode": "runOnceForAllItems",
+        "jsCode": "const staticData = $getWorkflowStaticData('global');\nstaticData.pollCount = (staticData.pollCount || 0) + 1;\nconst pollCount = staticData.pollCount;\nconst response = $input.first().json;\nconst status = response.data.status;\nconst runId = response.data.id;\nlet action = 'continue';\nlet errorMessage = '';\nif (status === 'SUCCEEDED') {\n  action = 'succeeded';\n  staticData.pollCount = 0;\n} else if (status === 'FAILED' || status === 'ABORTED' || status === 'TIMED-OUT') {\n  action = 'failed';\n  errorMessage = 'Apify run status: ' + status;\n  staticData.pollCount = 0;\n} else if (pollCount >= 30) {\n  action = 'failed';\n  errorMessage = 'Polling timeout: exceeded 15 minutes';\n  staticData.pollCount = 0;\n}\nreturn [{ json: { runId, pollCount, status, action, errorMessage } }];"
+      }
+    },
+    {
+      "id": "node_07",
+      "name": "Is Succeeded",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1500,
+        300
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "cond_succeeded",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              },
+              "leftValue": "={{ $json.action }}",
+              "rightValue": "succeeded"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "node_08",
+      "name": "Is Failed or Timeout",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1740,
+        560
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "cond_failed",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              },
+              "leftValue": "={{ $json.action }}",
+              "rightValue": "failed"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "node_09",
+      "name": "Fetch Dataset",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1740,
+        100
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.apify.com/v2/actor-runs/{{ $('Check Status').first().json.runId }}/dataset/items?token=REDACTED",
+        "authentication": "none",
+        "options": {}
+      },
+      "notes": "Fetches scraped listings from Apify. Assign your Apify HTTP Header Auth credential here."
+    },
+    {
+      "id": "node_10",
+      "name": "Map 34 Fields",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1980,
+        100
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "mode": "runOnceForAllItems",
+        "jsCode": "let rawItems = $input.all();\nif (rawItems.length === 1 && Array.isArray(rawItems[0].json)) {\n  rawItems = rawItems[0].json.map(item => ({ json: item }));\n}\nreturn rawItems.map(item => {\n  const d = item.json;\n  return { json: {\n    'zpid': String(d.zpid),\n    'Raw home status ': d.rawHomeStatus,\n    'Marketing status simplified ': d.marketingStatusSimplified,\n    'imgSrc': d.imgSrc,\n    'Has image': d.hasImage,\n    'detailUrl': d.detailUrl,\n    'Status type': d.statusType,\n    'statusText': d.statusText,\n    'Address': d.address,\n    'Address street': d.addressStreet,\n    'Address city': d.addressCity,\n    'Address state': d.addressState,\n    'Address zipcode': d.addressZipcode ? Number(d.addressZipcode) : null,\n    'Beds': d.beds,\n    'Sqft': d.area,\n    'Lat long latitude': d.latLong?.latitude,\n    'Lat long longitude': d.latLong?.longitude,\n    'Price': d.hdpData?.homeInfo?.price,\n    'Baths': d.hdpData?.homeInfo?.bathrooms,\n    'Hdp data home info days on zillow': d.hdpData?.homeInfo?.daysOnZillow,\n    'Hdp data home info country': d.hdpData?.homeInfo?.country,\n    'Hdp data home info tax assessed value': d.hdpData?.homeInfo?.taxAssessedValue,\n    'Hdp data home info lot area value': d.hdpData?.homeInfo?.lotAreaValue,\n    'Hdp data home info lot area unit': d.hdpData?.homeInfo?.lotAreaUnit,\n    'Broker name': d.brokerName,\n    'Photos': d.carouselPhotos?.[0]?.baseUrl,\n    'carouselBaseUrl': d.carouselPhotos?.[0]?.communityBaseUrl,\n    'Carousel photos composable photo data photo key': d.carouselPhotos?.[0]?.photoData?.photoKey,\n    'Found from search url': d.foundFromSearchUrl,\n    'Hdp data home info date price changed': d.hdpData?.homeInfo?.datePriceChanged,\n    'Hdp data home info rent zestimate': d.hdpData?.homeInfo?.rentZestimate,\n    'Hdp data home info price reduction': d.hdpData?.homeInfo?.priceReduction,\n    'Zestimate': d.zestimate\n  }};\n});"
+      }
+    },
+    {
+      "id": "node_11",
+      "name": "Prepare Batches",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2220,
+        100
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "mode": "runOnceForAllItems",
+        "jsCode": "const items = $input.all();\nconst batchSize = 10;\nconst batches = [];\nfor (let i = 0; i < items.length; i += batchSize) {\n  const batch = items.slice(i, i + batchSize);\n  const records = batch.map(item => ({ fields: item.json }));\n  batches.push({\n    json: {\n      payload: JSON.stringify({\n        performUpsert: { fieldsToMergeOn: ['zpid'] },\n        records: records\n      })\n    }\n  });\n}\nreturn batches;"
+      }
+    },
+    {
+      "id": "node_12",
+      "name": "Upsert to Airtable",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2460,
+        100
+      ],
+      "parameters": {
+        "method": "PATCH",
+        "url": "https://api.airtable.com/v0/appLmQyh1ov0NDQ58/tblJBrj6XNjap4wQb",
+        "authentication": "predefinedCredentialType",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.payload }}",
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1,
+              "batchInterval": 500
+            }
+          },
+          "timeout": 30000
+        },
+        "nodeCredentialType": "airtableTokenApi"
+      },
+      "notes": "Upserts records to Airtable in batches of 10. Assign your Airtable HTTP Header Auth credential here. Retries 3x on failure (rate limits).",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "BPWOrtwLe4IsJIrh",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "id": "node_13",
+      "name": "Aggregate Counts",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2700,
+        100
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "mode": "runOnceForAllItems",
+        "jsCode": "const items = $input.all();\nlet totalCreated = 0;\nlet totalUpdated = 0;\nfor (const item of items) {\n  totalCreated += (item.json.createdRecords || []).length;\n  totalUpdated += (item.json.updatedRecords || []).length;\n}\nconst now = new Date();\nlet runId = '';\ntry { runId = $('Check Status').first().json.runId; } catch(e) { runId = 'unknown'; }\nreturn [{\n  json: {\n    recordsAdded: totalCreated,\n    recordsUpdated: totalUpdated,\n    total: totalCreated + totalUpdated,\n    runDate: now.toISOString(),\n    date: now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),\n    runId: runId\n  }\n}];"
+      }
+    },
+    {
+      "id": "prepare-success-email-uuid",
+      "name": "Prepare Success Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2940,
+        100
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "mode": "runOnceForAllItems",
+        "jsCode": "const d = $json;\nconst lines = [\n  'From: info@rawfunds.com',\n  'To: info@rawfunds.com',\n  'Subject: FinallySettled Listings Sync Complete - ' + d.date,\n  'Content-Type: text/html; charset=utf-8',\n  '',\n  '<h2>Sync Complete</h2><ul><li><b>Records added:</b> ' + d.recordsAdded + '</li><li><b>Records updated:</b> ' + d.recordsUpdated + '</li><li><b>Total:</b> ' + d.total + '</li><li><b>Run ID:</b> ' + d.runId + '</li><li><b>Date:</b> ' + d.runDate + '</li></ul><p><a href=\"https://n8n.autogrowthhub.com\">Open n8n</a></p>'\n];\nconst raw = Buffer.from(lines.join('\\r\\n')).toString('base64url');\nreturn [{ json: { raw } }];"
+      }
+    },
+    {
+      "id": "prepare-failure-email-uuid",
+      "name": "Prepare Failure Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2000,
+        560
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "mode": "runOnceForAllItems",
+        "jsCode": "const d = $json;\nconst lines = [\n  'From: info@rawfunds.com',\n  'To: info@rawfunds.com',\n  'Subject: FinallySettled Listings Sync FAILED',\n  'Content-Type: text/html; charset=utf-8',\n  '',\n  '<h2>Sync Failed</h2><ul><li><b>Error:</b> ' + (d.errorMessage || 'Unknown') + '</li><li><b>Status:</b> ' + (d.status || 'Unknown') + '</li><li><b>Run ID:</b> ' + (d.runId || 'Unknown') + '</li><li><b>Date:</b> ' + new Date().toISOString() + '</li></ul><p><a href=\"https://n8n.autogrowthhub.com\">Check n8n</a></p>'\n];\nconst raw = Buffer.from(lines.join('\\r\\n')).toString('base64url');\nreturn [{ json: { raw } }];"
+      }
+    },
+    {
+      "id": "prepare-error-email-uuid",
+      "name": "Prepare Error Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        280,
+        700
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "mode": "runOnceForAllItems",
+        "jsCode": "const d = $json;\nconst errMsg = d.execution && d.execution.error ? d.execution.error.message : 'Unknown error';\nconst failedNode = d.execution ? d.execution.lastNodeExecuted : 'Unknown';\nconst lines = [\n  'From: info@rawfunds.com',\n  'To: info@rawfunds.com',\n  'Subject: FinallySettled Workflow ERROR',\n  'Content-Type: text/html; charset=utf-8',\n  '',\n  '<h2>Workflow Error</h2><ul><li><b>Error:</b> ' + errMsg + '</li><li><b>Failed node:</b> ' + failedNode + '</li><li><b>Date:</b> ' + new Date().toISOString() + '</li></ul><p><a href=\"https://n8n.autogrowthhub.com\">Check n8n</a></p>'\n];\nconst raw = Buffer.from(lines.join('\\r\\n')).toString('base64url');\nreturn [{ json: { raw } }];"
+      }
+    },
+    {
+      "id": "node_16",
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        700
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "3596477d-cb08-4bbf-8c98-7fa61c8d6bd9",
+      "name": "Success Email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3180,
+        100
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://gmail.googleapis.com/gmail/v1/users/me/messages/send",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={\"raw\":\"{{ $json.raw }}\"}",
+        "options": {}
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "KOiAJiJUgtM7Rjqn",
+          "name": "Communications - Gmail OAuth2"
+        }
+      }
+    },
+    {
+      "id": "d35c30f4-17a2-4fa8-94dc-3d70519eb120",
+      "name": "Failure Email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2240,
+        560
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://gmail.googleapis.com/gmail/v1/users/me/messages/send",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={\"raw\":\"{{ $json.raw }}\"}",
+        "options": {}
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "KOiAJiJUgtM7Rjqn",
+          "name": "Communications - Gmail OAuth2"
+        }
+      }
+    },
+    {
+      "id": "a803b4de-e21d-4e2f-abee-0449ad016fec",
+      "name": "Error Email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        520,
+        700
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://gmail.googleapis.com/gmail/v1/users/me/messages/send",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={\"raw\":\"{{ $json.raw }}\"}",
+        "options": {}
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "KOiAJiJUgtM7Rjqn",
+          "name": "Communications - Gmail OAuth2"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Trigger Apify Run",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger Apify Run": {
+      "main": [
+        [
+          {
+            "node": "Extract Run ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Run ID": {
+      "main": [
+        [
+          {
+            "node": "Wait 30s",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 30s": {
+      "main": [
+        [
+          {
+            "node": "Poll Run Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Poll Run Status": {
+      "main": [
+        [
+          {
+            "node": "Check Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Status": {
+      "main": [
+        [
+          {
+            "node": "Is Succeeded",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Succeeded": {
+      "main": [
+        [
+          {
+            "node": "Fetch Dataset",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Is Failed or Timeout",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Dataset": {
+      "main": [
+        [
+          {
+            "node": "Map 34 Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Map 34 Fields": {
+      "main": [
+        [
+          {
+            "node": "Prepare Batches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Batches": {
+      "main": [
+        [
+          {
+            "node": "Upsert to Airtable",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert to Airtable": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Counts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Failed or Timeout": {
+      "main": [
+        [
+          {
+            "node": "Prepare Failure Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait 30s",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Counts": {
+      "main": [
+        [
+          {
+            "node": "Prepare Success Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Success Email": {
+      "main": [
+        [
+          {
+            "node": "Success Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Failure Email": {
+      "main": [
+        [
+          {
+            "node": "Failure Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Prepare Error Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Error Email": {
+      "main": [
+        [
+          {
+            "node": "Error Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "UTC",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "saveExecutionProgress": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false,
+    "errorWorkflow": "VqLfiyi9b86A4AVb"
+  },
+  "staticData": {
+    "node:Schedule Trigger": {
+      "recurrenceRules": []
+    },
+    "global": {
+      "pollCount": 0
+    }
+  },
+  "meta": null,
+  "pinData": null,
+  "versionId": "3edb1633-7770-4077-bc33-9749a8410766",
+  "activeVersionId": "3edb1633-7770-4077-bc33-9749a8410766",
+  "versionCounter": 1590,
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-04-01T02:48:23.805Z",
+      "createdAt": "2026-04-01T02:48:23.805Z",
+      "role": "workflow:owner",
+      "workflowId": "VqLfiyi9b86A4AVb",
+      "projectId": "Q7ytaIj7oyQpddlr",
+      "project": {
+        "updatedAt": "2026-02-03T04:38:34.404Z",
+        "createdAt": "2026-02-03T04:34:14.320Z",
+        "id": "Q7ytaIj7oyQpddlr",
+        "name": "Raw Funds <info@rawfunds.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "d42639c1-6ec3-44cd-b664-d9c56171bec3",
+        "projectRelations": [
+          {
+            "updatedAt": "2026-02-03T04:34:14.320Z",
+            "createdAt": "2026-02-03T04:34:14.320Z",
+            "userId": "d42639c1-6ec3-44cd-b664-d9c56171bec3",
+            "projectId": "Q7ytaIj7oyQpddlr",
+            "user": {
+              "updatedAt": "2026-04-22T18:48:22.000Z",
+              "createdAt": "2026-02-03T04:34:13.932Z",
+              "id": "d42639c1-6ec3-44cd-b664-d9c56171bec3",
+              "email": "info@rawfunds.com",
+              "firstName": "Raw",
+              "lastName": "Funds",
+              "personalizationAnswers": {
+                "version": "v4",
+                "personalization_survey_submitted_at": "2026-02-03T04:38:47.373Z",
+                "personalization_survey_n8n_version": "2.6.3",
+                "companySize": "<20",
+                "companyType": "saas",
+                "role": "business-owner",
+                "reportedSource": "google"
+              },
+              "settings": {
+                "userActivated": true,
+                "easyAIWorkflowOnboarded": true,
+                "firstSuccessfulWorkflowId": "Lry8UR2aE1vKkmNN5VILU",
+                "userActivatedAt": 1771218033027,
+                "npsSurvey": {
+                  "waitingForResponse": true,
+                  "ignoredCount": 2,
+                  "lastShownAt": 1774248148055
+                }
+              },
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2026-04-22",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": {
+    "updatedAt": "2026-04-01T05:35:37.475Z",
+    "createdAt": "2026-04-01T05:35:37.475Z",
+    "versionId": "3edb1633-7770-4077-bc33-9749a8410766",
+    "workflowId": "VqLfiyi9b86A4AVb",
+    "nodes": [
+      {
+        "id": "node_01",
+        "name": "Schedule Trigger",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          0,
+          300
+        ],
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "cronExpression",
+                "expression": "0 0 5 * * 2,5"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "node_02",
+        "name": "Trigger Apify Run",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          280,
+          300
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.apify.com/v2/actor-tasks/F2Ngv6tdXAGu8rwvb/runs?token=REDACTED",
+          "authentication": "none",
+          "options": {}
+        },
+        "notes": "Triggers the Apify scraping task. Assign your Apify HTTP Header Auth credential here."
+      },
+      {
+        "id": "node_03",
+        "name": "Extract Run ID",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          540,
+          300
+        ],
+        "parameters": {
+          "language": "javaScript",
+          "mode": "runOnceForAllItems",
+          "jsCode": "const staticData = $getWorkflowStaticData('global');\nstaticData.pollCount = 0;\nconst response = $input.first().json;\nconst runId = response.data.id;\nreturn [{ json: { runId } }];"
+        }
+      },
+      {
+        "id": "node_04",
+        "name": "Wait 30s",
+        "type": "n8n-nodes-base.wait",
+        "typeVersion": 1.1,
+        "position": [
+          780,
+          300
+        ],
+        "parameters": {
+          "resume": "timeInterval",
+          "amount": 30,
+          "unit": "seconds"
+        }
+      },
+      {
+        "id": "node_05",
+        "name": "Poll Run Status",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1020,
+          300
+        ],
+        "parameters": {
+          "method": "GET",
+          "url": "=https://api.apify.com/v2/actor-runs/{{ $json.runId }}?token=REDACTED",
+          "authentication": "none",
+          "options": {}
+        },
+        "notes": "Polls Apify run status every 30s. Assign your Apify HTTP Header Auth credential here."
+      },
+      {
+        "id": "node_06",
+        "name": "Check Status",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1260,
+          300
+        ],
+        "parameters": {
+          "language": "javaScript",
+          "mode": "runOnceForAllItems",
+          "jsCode": "const staticData = $getWorkflowStaticData('global');\nstaticData.pollCount = (staticData.pollCount || 0) + 1;\nconst pollCount = staticData.pollCount;\nconst response = $input.first().json;\nconst status = response.data.status;\nconst runId = response.data.id;\nlet action = 'continue';\nlet errorMessage = '';\nif (status === 'SUCCEEDED') {\n  action = 'succeeded';\n  staticData.pollCount = 0;\n} else if (status === 'FAILED' || status === 'ABORTED' || status === 'TIMED-OUT') {\n  action = 'failed';\n  errorMessage = 'Apify run status: ' + status;\n  staticData.pollCount = 0;\n} else if (pollCount >= 30) {\n  action = 'failed';\n  errorMessage = 'Polling timeout: exceeded 15 minutes';\n  staticData.pollCount = 0;\n}\nreturn [{ json: { runId, pollCount, status, action, errorMessage } }];"
+        }
+      },
+      {
+        "id": "node_07",
+        "name": "Is Succeeded",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          1500,
+          300
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "typeValidation": "strict"
+            },
+            "combinator": "and",
+            "conditions": [
+              {
+                "id": "cond_succeeded",
+                "operator": {
+                  "type": "string",
+                  "operation": "equals"
+                },
+                "leftValue": "={{ $json.action }}",
+                "rightValue": "succeeded"
+              }
+            ]
+          },
+          "options": {}
+        }
+      },
+      {
+        "id": "node_08",
+        "name": "Is Failed or Timeout",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          1740,
+          560
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "typeValidation": "strict"
+            },
+            "combinator": "and",
+            "conditions": [
+              {
+                "id": "cond_failed",
+                "operator": {
+                  "type": "string",
+                  "operation": "equals"
+                },
+                "leftValue": "={{ $json.action }}",
+                "rightValue": "failed"
+              }
+            ]
+          },
+          "options": {}
+        }
+      },
+      {
+        "id": "node_09",
+        "name": "Fetch Dataset",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1740,
+          100
+        ],
+        "parameters": {
+          "method": "GET",
+          "url": "=https://api.apify.com/v2/actor-runs/{{ $('Check Status').first().json.runId }}/dataset/items?token=REDACTED",
+          "authentication": "none",
+          "options": {}
+        },
+        "notes": "Fetches scraped listings from Apify. Assign your Apify HTTP Header Auth credential here."
+      },
+      {
+        "id": "node_10",
+        "name": "Map 34 Fields",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1980,
+          100
+        ],
+        "parameters": {
+          "language": "javaScript",
+          "mode": "runOnceForAllItems",
+          "jsCode": "let rawItems = $input.all();\nif (rawItems.length === 1 && Array.isArray(rawItems[0].json)) {\n  rawItems = rawItems[0].json.map(item => ({ json: item }));\n}\nreturn rawItems.map(item => {\n  const d = item.json;\n  return { json: {\n    'zpid': String(d.zpid),\n    'Raw home status ': d.rawHomeStatus,\n    'Marketing status simplified ': d.marketingStatusSimplified,\n    'imgSrc': d.imgSrc,\n    'Has image': d.hasImage,\n    'detailUrl': d.detailUrl,\n    'Status type': d.statusType,\n    'statusText': d.statusText,\n    'Address': d.address,\n    'Address street': d.addressStreet,\n    'Address city': d.addressCity,\n    'Address state': d.addressState,\n    'Address zipcode': d.addressZipcode ? Number(d.addressZipcode) : null,\n    'Beds': d.beds,\n    'Sqft': d.area,\n    'Lat long latitude': d.latLong?.latitude,\n    'Lat long longitude': d.latLong?.longitude,\n    'Price': d.hdpData?.homeInfo?.price,\n    'Baths': d.hdpData?.homeInfo?.bathrooms,\n    'Hdp data home info days on zillow': d.hdpData?.homeInfo?.daysOnZillow,\n    'Hdp data home info country': d.hdpData?.homeInfo?.country,\n    'Hdp data home info tax assessed value': d.hdpData?.homeInfo?.taxAssessedValue,\n    'Hdp data home info lot area value': d.hdpData?.homeInfo?.lotAreaValue,\n    'Hdp data home info lot area unit': d.hdpData?.homeInfo?.lotAreaUnit,\n    'Broker name': d.brokerName,\n    'Photos': d.carouselPhotos?.[0]?.baseUrl,\n    'carouselBaseUrl': d.carouselPhotos?.[0]?.communityBaseUrl,\n    'Carousel photos composable photo data photo key': d.carouselPhotos?.[0]?.photoData?.photoKey,\n    'Found from search url': d.foundFromSearchUrl,\n    'Hdp data home info date price changed': d.hdpData?.homeInfo?.datePriceChanged,\n    'Hdp data home info rent zestimate': d.hdpData?.homeInfo?.rentZestimate,\n    'Hdp data home info price reduction': d.hdpData?.homeInfo?.priceReduction,\n    'Zestimate': d.zestimate\n  }};\n});"
+        }
+      },
+      {
+        "id": "node_11",
+        "name": "Prepare Batches",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2220,
+          100
+        ],
+        "parameters": {
+          "language": "javaScript",
+          "mode": "runOnceForAllItems",
+          "jsCode": "const items = $input.all();\nconst batchSize = 10;\nconst batches = [];\nfor (let i = 0; i < items.length; i += batchSize) {\n  const batch = items.slice(i, i + batchSize);\n  const records = batch.map(item => ({ fields: item.json }));\n  batches.push({\n    json: {\n      payload: JSON.stringify({\n        performUpsert: { fieldsToMergeOn: ['zpid'] },\n        records: records\n      })\n    }\n  });\n}\nreturn batches;"
+        }
+      },
+      {
+        "id": "node_12",
+        "name": "Upsert to Airtable",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          2460,
+          100
+        ],
+        "parameters": {
+          "method": "PATCH",
+          "url": "https://api.airtable.com/v0/appLmQyh1ov0NDQ58/tblJBrj6XNjap4wQb",
+          "authentication": "predefinedCredentialType",
+          "sendBody": true,
+          "contentType": "json",
+          "specifyBody": "json",
+          "jsonBody": "={{ $json.payload }}",
+          "options": {
+            "batching": {
+              "batch": {
+                "batchSize": 1,
+                "batchInterval": 500
+              }
+            },
+            "timeout": 30000
+          },
+          "nodeCredentialType": "airtableTokenApi"
+        },
+        "notes": "Upserts records to Airtable in batches of 10. Assign your Airtable HTTP Header Auth credential here. Retries 3x on failure (rate limits).",
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 5000,
+        "credentials": {
+          "airtableTokenApi": {
+            "id": "BPWOrtwLe4IsJIrh",
+            "name": "Airtable Personal Access Token account"
+          }
+        }
+      },
+      {
+        "id": "node_13",
+        "name": "Aggregate Counts",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2700,
+          100
+        ],
+        "parameters": {
+          "language": "javaScript",
+          "mode": "runOnceForAllItems",
+          "jsCode": "const items = $input.all();\nlet totalCreated = 0;\nlet totalUpdated = 0;\nfor (const item of items) {\n  totalCreated += (item.json.createdRecords || []).length;\n  totalUpdated += (item.json.updatedRecords || []).length;\n}\nconst now = new Date();\nlet runId = '';\ntry { runId = $('Check Status').first().json.runId; } catch(e) { runId = 'unknown'; }\nreturn [{\n  json: {\n    recordsAdded: totalCreated,\n    recordsUpdated: totalUpdated,\n    total: totalCreated + totalUpdated,\n    runDate: now.toISOString(),\n    date: now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),\n    runId: runId\n  }\n}];"
+        }
+      },
+      {
+        "id": "prepare-success-email-uuid",
+        "name": "Prepare Success Email",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2940,
+          100
+        ],
+        "parameters": {
+          "language": "javaScript",
+          "mode": "runOnceForAllItems",
+          "jsCode": "const d = $json;\nconst lines = [\n  'From: info@rawfunds.com',\n  'To: info@rawfunds.com',\n  'Subject: FinallySettled Listings Sync Complete - ' + d.date,\n  'Content-Type: text/html; charset=utf-8',\n  '',\n  '<h2>Sync Complete</h2><ul><li><b>Records added:</b> ' + d.recordsAdded + '</li><li><b>Records updated:</b> ' + d.recordsUpdated + '</li><li><b>Total:</b> ' + d.total + '</li><li><b>Run ID:</b> ' + d.runId + '</li><li><b>Date:</b> ' + d.runDate + '</li></ul><p><a href=\"https://n8n.autogrowthhub.com\">Open n8n</a></p>'\n];\nconst raw = Buffer.from(lines.join('\\r\\n')).toString('base64url');\nreturn [{ json: { raw } }];"
+        }
+      },
+      {
+        "id": "prepare-failure-email-uuid",
+        "name": "Prepare Failure Email",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2000,
+          560
+        ],
+        "parameters": {
+          "language": "javaScript",
+          "mode": "runOnceForAllItems",
+          "jsCode": "const d = $json;\nconst lines = [\n  'From: info@rawfunds.com',\n  'To: info@rawfunds.com',\n  'Subject: FinallySettled Listings Sync FAILED',\n  'Content-Type: text/html; charset=utf-8',\n  '',\n  '<h2>Sync Failed</h2><ul><li><b>Error:</b> ' + (d.errorMessage || 'Unknown') + '</li><li><b>Status:</b> ' + (d.status || 'Unknown') + '</li><li><b>Run ID:</b> ' + (d.runId || 'Unknown') + '</li><li><b>Date:</b> ' + new Date().toISOString() + '</li></ul><p><a href=\"https://n8n.autogrowthhub.com\">Check n8n</a></p>'\n];\nconst raw = Buffer.from(lines.join('\\r\\n')).toString('base64url');\nreturn [{ json: { raw } }];"
+        }
+      },
+      {
+        "id": "prepare-error-email-uuid",
+        "name": "Prepare Error Email",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          280,
+          700
+        ],
+        "parameters": {
+          "language": "javaScript",
+          "mode": "runOnceForAllItems",
+          "jsCode": "const d = $json;\nconst errMsg = d.execution && d.execution.error ? d.execution.error.message : 'Unknown error';\nconst failedNode = d.execution ? d.execution.lastNodeExecuted : 'Unknown';\nconst lines = [\n  'From: info@rawfunds.com',\n  'To: info@rawfunds.com',\n  'Subject: FinallySettled Workflow ERROR',\n  'Content-Type: text/html; charset=utf-8',\n  '',\n  '<h2>Workflow Error</h2><ul><li><b>Error:</b> ' + errMsg + '</li><li><b>Failed node:</b> ' + failedNode + '</li><li><b>Date:</b> ' + new Date().toISOString() + '</li></ul><p><a href=\"https://n8n.autogrowthhub.com\">Check n8n</a></p>'\n];\nconst raw = Buffer.from(lines.join('\\r\\n')).toString('base64url');\nreturn [{ json: { raw } }];"
+        }
+      },
+      {
+        "id": "node_16",
+        "name": "Error Trigger",
+        "type": "n8n-nodes-base.errorTrigger",
+        "typeVersion": 1,
+        "position": [
+          0,
+          700
+        ],
+        "parameters": {}
+      },
+      {
+        "id": "3596477d-cb08-4bbf-8c98-7fa61c8d6bd9",
+        "name": "Success Email",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          3180,
+          100
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://gmail.googleapis.com/gmail/v1/users/me/messages/send",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "gmailOAuth2",
+          "sendBody": true,
+          "contentType": "json",
+          "specifyBody": "json",
+          "jsonBody": "={\"raw\":\"{{ $json.raw }}\"}",
+          "options": {}
+        },
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "KOiAJiJUgtM7Rjqn",
+            "name": "Communications - Gmail OAuth2"
+          }
+        }
+      },
+      {
+        "id": "d35c30f4-17a2-4fa8-94dc-3d70519eb120",
+        "name": "Failure Email",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          2240,
+          560
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://gmail.googleapis.com/gmail/v1/users/me/messages/send",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "gmailOAuth2",
+          "sendBody": true,
+          "contentType": "json",
+          "specifyBody": "json",
+          "jsonBody": "={\"raw\":\"{{ $json.raw }}\"}",
+          "options": {}
+        },
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "KOiAJiJUgtM7Rjqn",
+            "name": "Communications - Gmail OAuth2"
+          }
+        }
+      },
+      {
+        "id": "a803b4de-e21d-4e2f-abee-0449ad016fec",
+        "name": "Error Email",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          520,
+          700
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://gmail.googleapis.com/gmail/v1/users/me/messages/send",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "gmailOAuth2",
+          "sendBody": true,
+          "contentType": "json",
+          "specifyBody": "json",
+          "jsonBody": "={\"raw\":\"{{ $json.raw }}\"}",
+          "options": {}
+        },
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "KOiAJiJUgtM7Rjqn",
+            "name": "Communications - Gmail OAuth2"
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Schedule Trigger": {
+        "main": [
+          [
+            {
+              "node": "Trigger Apify Run",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Trigger Apify Run": {
+        "main": [
+          [
+            {
+              "node": "Extract Run ID",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Extract Run ID": {
+        "main": [
+          [
+            {
+              "node": "Wait 30s",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Wait 30s": {
+        "main": [
+          [
+            {
+              "node": "Poll Run Status",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Poll Run Status": {
+        "main": [
+          [
+            {
+              "node": "Check Status",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Check Status": {
+        "main": [
+          [
+            {
+              "node": "Is Succeeded",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Is Succeeded": {
+        "main": [
+          [
+            {
+              "node": "Fetch Dataset",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Is Failed or Timeout",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Fetch Dataset": {
+        "main": [
+          [
+            {
+              "node": "Map 34 Fields",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Map 34 Fields": {
+        "main": [
+          [
+            {
+              "node": "Prepare Batches",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prepare Batches": {
+        "main": [
+          [
+            {
+              "node": "Upsert to Airtable",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Upsert to Airtable": {
+        "main": [
+          [
+            {
+              "node": "Aggregate Counts",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Is Failed or Timeout": {
+        "main": [
+          [
+            {
+              "node": "Prepare Failure Email",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Wait 30s",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Aggregate Counts": {
+        "main": [
+          [
+            {
+              "node": "Prepare Success Email",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prepare Success Email": {
+        "main": [
+          [
+            {
+              "node": "Success Email",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prepare Failure Email": {
+        "main": [
+          [
+            {
+              "node": "Failure Email",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Error Trigger": {
+        "main": [
+          [
+            {
+              "node": "Prepare Error Email",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prepare Error Email": {
+        "main": [
+          [
+            {
+              "node": "Error Email",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Raw Funds",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-04-01T05:35:37.602Z",
+        "id": 294,
+        "workflowId": "VqLfiyi9b86A4AVb",
+        "versionId": "3edb1633-7770-4077-bc33-9749a8410766",
+        "event": "activated",
+        "userId": "d42639c1-6ec3-44cd-b664-d9c56171bec3"
+      }
+    ]
+  }
+}
