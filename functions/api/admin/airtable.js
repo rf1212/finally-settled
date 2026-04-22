@@ -36,10 +36,18 @@ function requireConfiguredAdminPassword(env) {
   return { password };
 }
 
+function requireAirtableKey(env) {
+  const apiKey = typeof env.AIRTABLE_API_KEY === 'string' ? env.AIRTABLE_API_KEY.trim() : '';
+  if (!apiKey) return { response: json({ error: 'server_misconfigured', detail: 'AIRTABLE_API_KEY is required' }, 503) };
+  return { apiKey };
+}
+
 export async function onRequestGet({ request, env }) {
   const auth = requireConfiguredAdminPassword(env);
   if (auth.response) return auth.response;
   if (!checkAuth(request, auth.password)) return json({ error: 'unauthorized' }, 401);
+  const airtable = requireAirtableKey(env);
+  if (airtable.response) return airtable.response;
 
   const url = new URL(request.url);
   const table  = url.searchParams.get('table');
@@ -53,7 +61,7 @@ export async function onRequestGet({ request, env }) {
     (filter ? `&filterByFormula=${encodeURIComponent(filter)}` : '');
 
   const r = await fetch(atUrl, {
-    headers: { Authorization: `Bearer ${env.AIRTABLE_API_KEY}` },
+    headers: { Authorization: `Bearer ${airtable.apiKey}` },
   });
   const d = await r.json();
   return json(d, r.ok ? 200 : r.status);
@@ -63,6 +71,8 @@ export async function onRequestPatch({ request, env }) {
   const auth = requireConfiguredAdminPassword(env);
   if (auth.response) return auth.response;
   if (!checkAuth(request, auth.password)) return json({ error: 'unauthorized' }, 401);
+  const airtable = requireAirtableKey(env);
+  if (airtable.response) return airtable.response;
 
   let body;
   try {
@@ -82,7 +92,7 @@ export async function onRequestPatch({ request, env }) {
   const r = await fetch(`https://api.airtable.com/v0/${AIRTABLE_BASE}/${table}/${id}`, {
     method: 'PATCH',
     headers: {
-      Authorization: `Bearer ${env.AIRTABLE_API_KEY}`,
+      Authorization: `Bearer ${airtable.apiKey}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({ fields }),
