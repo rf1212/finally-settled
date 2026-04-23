@@ -1,6 +1,6 @@
 # Finally Settled Live Launch Verification
 
-Updated: 2026-04-23 (rechecked)
+Updated: 2026-04-23 (post-merge recheck)
 
 Scope:
 - live production verification against `https://finallysettled.com`
@@ -15,25 +15,30 @@ Source of truth:
 ## Merge State At Verification Time
 
 PR #8 status at the time of this verification:
-- state: `OPEN`
-- merged: `no`
+- state: `MERGED`
+- merged: `yes`
+- merge commit: `dc5cd6d5eba73732d880a5f1f285841b74541df8`
 
 Interpretation:
-- GitHub still reported PR #8 as open during this re-check
-- production still did not reflect the hardened PR #8 behavior
-- this verification confirms the current live state is still the older intake deployment
+- PR #8 is now merged into `main`
+- Cloudflare Pages production is serving production deploy commit `dc5cd6d5eba73732d880a5f1f285841b74541df8`
+- the hardened `/qualify.html` and `/api/apply` behavior is now live on production
+- `/request-showing` still does not match the preview-era expectation documented earlier
 
 ## Production Updated
 
-No.
+Yes, with one remaining page-level inconsistency.
 
 Evidence:
-- `/qualify.html` still returned `200` instead of redirecting to `/apply`
-- `/request-showing` still showed the older surface and still linked to `/getapproved`
-- `/api/apply` still returned `500 {"error":"internal_error"}` for malformed and invalid payloads
+- `/qualify.html` now returns `301` to `/apply`
+- `/api/apply` now returns the expected `400` responses for malformed and invalid payloads
+- controlled valid `/api/apply` submissions still return success
+- Cloudflare Pages production deployment metadata shows commit `dc5cd6d5eba73732d880a5f1f285841b74541df8` on branch `main`
+- `/request-showing` still shows the older request-showing form and `/getapproved` CTA
 
 Conclusion:
-- the PR #8 hardening and canonical-route changes were still not live on production at verification time
+- the hardened intake flow is now live on production
+- however, `/request-showing` still does not reflect the expected pre-approval-first messaging
 
 ## Ordered Live Checks
 
@@ -46,11 +51,11 @@ curl -sSI https://finallysettled.com/qualify.html
 ```
 
 Observed result:
-- `200`
-- no redirect
+- `301`
+- `Location: https://finallysettled.com/apply`
 
 Status:
-- failed
+- passed
 
 ### 2. `/apply` loads and remains the canonical intake page
 
@@ -78,7 +83,9 @@ curl -sL https://finallysettled.com/request-showing | rg -n "Showings are curren
 ```
 
 Observed result:
-- page still contained the older nav/link structure with `/getapproved`
+- page still contains the older showing-request form
+- page still contains `/getapproved` in the nav CTA
+- page does not show the expected pre-approval-first messaging
 
 Status:
 - failed
@@ -95,15 +102,15 @@ curl -sS -i https://finallysettled.com/api/apply \
 ```
 
 Observed result:
-- `500`
-- `{"error":"internal_error"}`
+- `400`
+- `{"error":"invalid_json"}`
 
 Expected after PR #8:
 - `400`
 - `{"error":"invalid_json"}`
 
 Status:
-- failed
+- passed
 
 ### 5. `/api/apply` incomplete payload
 
@@ -117,15 +124,15 @@ curl -sS -i https://finallysettled.com/api/apply \
 ```
 
 Observed result:
-- `500`
-- `{"error":"internal_error"}`
+- `400`
+- `{"error":"missing_required_fields","fields":["lastName","email","phone","preferredState","preferredCity","downPayment"]}`
 
 Expected after PR #8:
 - `400`
 - `{"error":"missing_required_fields", ...}`
 
 Status:
-- failed
+- passed
 
 ### 6. `/api/apply` invalid down payment
 
@@ -139,20 +146,20 @@ curl -sS -i https://finallysettled.com/api/apply \
 ```
 
 Observed result:
-- `500`
-- `{"error":"internal_error"}`
+- `400`
+- `{"error":"invalid_down_payment","field":"downPayment"}`
 
 Expected after PR #8:
 - `400`
 - `{"error":"invalid_down_payment","field":"downPayment"}`
 
 Status:
-- failed
+- passed
 
 ### 7. `/api/apply` controlled valid payload
 
 Test email used:
-- `live-launch-verification-1776923281@example.com`
+- `live-launch-verification-1776923915@example.com`
 
 Command:
 
@@ -163,7 +170,7 @@ curl -sS -i https://finallysettled.com/api/apply \
   --data '{
     "firstName":"Live",
     "lastName":"Verification",
-    "email":"live-launch-verification-1776923281@example.com",
+    "email":"live-launch-verification-1776923915@example.com",
     "phone":"555-555-5555",
     "preferredState":"AL",
     "preferredCity":"Birmingham",
@@ -184,8 +191,8 @@ Status:
 - passed
 
 Interpretation:
-- the currently deployed production lead engine still accepts a valid intake payload
-- however, it is still the older, unhardened version because the invalid-payload checks failed
+- the currently deployed production lead engine accepts a valid intake payload
+- the hardened invalid-payload behavior is also now live
 
 ## Expected Airtable Outcomes For Successful Valid Payload
 
@@ -209,7 +216,7 @@ Exact blocker:
 ## Exact Manual Airtable Verification Steps
 
 Using the test email:
-- `live-launch-verification-1776923281@example.com`
+- `live-launch-verification-1776923915@example.com`
 
 Check in Airtable:
 1. Contacts table for a record with that email
@@ -221,34 +228,34 @@ Check in Airtable:
 ## Pass / Fail Summary
 
 Passed:
-- `/apply` loads
-- valid `/api/apply` payload succeeded
-
-Failed:
 - `/qualify.html` redirect
-- `/request-showing` updated messaging
+- `/apply` loads
 - `/api/apply` malformed JSON handling
 - `/api/apply` incomplete payload handling
 - `/api/apply` invalid down payment handling
+- valid `/api/apply` payload succeeded
+
+Failed:
+- `/request-showing` updated messaging
 
 ## Limited Live Lead Capture Readiness
 
 Ready for limited live lead capture:
-- no, not for the intended PR #8 hardened launch path
+- yes
 
 Reason:
-- production is still serving the old, unhardened intake behavior
-- valid lead capture still appears to work
+- the canonical `/apply` intake path is live
+- invalid payloads now fail safely with `400` responses
+- valid lead capture still works
+- the remaining `/request-showing` inconsistency does not block limited lead capture through `/apply`
 
 Current blocker:
-- production has not caught up to the verified preview behavior, so the canonical `/apply` hardening changes are still not live
-- but the production environment has not yet adopted the safer canonical-route and bad-payload protections
+- `/request-showing` still needs follow-up if the pre-approval-first messaging on that page is required for consistency
 
 ## Remaining Blocker
 
 Primary blocker:
-- PR #8 changes were not live on production at verification time
+- no launch-blocking production deploy blocker remains for the canonical `/apply` path
 
 Operational blocker:
-- production promotion/merge must happen first
-- after promotion, the same live checks must be rerun to confirm production now matches preview behavior
+- `/request-showing` still needs a small follow-up pass if that page must be aligned with the launch messaging
