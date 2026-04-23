@@ -1,6 +1,6 @@
 # Finally Settled Live Launch Verification
 
-Updated: 2026-04-22
+Updated: 2026-04-23
 
 Scope:
 - live production verification against `https://finallysettled.com`
@@ -19,8 +19,9 @@ PR #8 status at the time of this verification:
 - merged: `no`
 
 Interpretation:
-- production was not expected to reflect PR #8 yet
-- this verification captured the current live state before or without final production promotion
+- GitHub still reported PR #8 as open during this re-check
+- production still did not reflect the hardened PR #8 behavior
+- this verification confirms the current live state is still the older intake deployment
 
 ## Production Updated
 
@@ -32,7 +33,7 @@ Evidence:
 - `/api/apply` still returned `500 {"error":"internal_error"}` for malformed and invalid payloads
 
 Conclusion:
-- the PR #8 hardening and canonical-route changes were not yet live on production at verification time
+- the PR #8 hardening and canonical-route changes were still not live on production at verification time
 
 ## Ordered Live Checks
 
@@ -151,7 +152,7 @@ Status:
 ### 7. `/api/apply` controlled valid payload
 
 Test email used:
-- `live-launch-verification-1776899359@example.com`
+- `live-launch-verification-1776922629@example.com`
 
 Command:
 
@@ -162,7 +163,7 @@ curl -sS -i https://finallysettled.com/api/apply \
   --data '{
     "firstName":"Live",
     "lastName":"Verification",
-    "email":"live-launch-verification-1776899359@example.com",
+    "email":"live-launch-verification-1776922629@example.com",
     "phone":"555-555-5555",
     "preferredState":"AL",
     "preferredCity":"Birmingham",
@@ -208,7 +209,7 @@ Exact blocker:
 ## Exact Manual Airtable Verification Steps
 
 Using the test email:
-- `live-launch-verification-1776899359@example.com`
+- `live-launch-verification-1776922629@example.com`
 
 Check in Airtable:
 1. Contacts table for a record with that email
@@ -238,6 +239,9 @@ Ready for limited live lead capture:
 Reason:
 - production is still serving the old, unhardened intake behavior
 - valid lead capture still appears to work
+
+Current blocker:
+- production has not caught up to the verified preview behavior, so the canonical `/apply` hardening changes are still not live
 - but the production environment has not yet adopted the safer canonical-route and bad-payload protections
 
 ## Remaining Blocker
