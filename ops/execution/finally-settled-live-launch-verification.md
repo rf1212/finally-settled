@@ -1,6 +1,6 @@
 # Finally Settled Live Launch Verification
 
-Updated: 2026-04-23
+Updated: 2026-04-23 (rechecked)
 
 Scope:
 - live production verification against `https://finallysettled.com`
@@ -152,7 +152,7 @@ Status:
 ### 7. `/api/apply` controlled valid payload
 
 Test email used:
-- `live-launch-verification-1776922629@example.com`
+- `live-launch-verification-1776923281@example.com`
 
 Command:
 
@@ -163,7 +163,7 @@ curl -sS -i https://finallysettled.com/api/apply \
   --data '{
     "firstName":"Live",
     "lastName":"Verification",
-    "email":"live-launch-verification-1776922629@example.com",
+    "email":"live-launch-verification-1776923281@example.com",
     "phone":"555-555-5555",
     "preferredState":"AL",
     "preferredCity":"Birmingham",
@@ -209,7 +209,7 @@ Exact blocker:
 ## Exact Manual Airtable Verification Steps
 
 Using the test email:
-- `live-launch-verification-1776922629@example.com`
+- `live-launch-verification-1776923281@example.com`
 
 Check in Airtable:
 1. Contacts table for a record with that email
