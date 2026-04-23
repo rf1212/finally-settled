@@ -1,0 +1,825 @@
+{
+  "base_id": "appLmQyh1ov0NDQ58",
+  "tables": [
+    {
+      "id": "tblJBrj6XNjap4wQb",
+      "name": "Listings",
+      "field_count": 65,
+      "fields": [
+        {
+          "id": "fldNYnIZnQzwIRoDr",
+          "name": "zpid",
+          "type": "singleLineText"
+        },
+        {
+          "id": "fldJ1MoKriw2aRmGh",
+          "name": "Address",
+          "type": "singleLineText"
+        },
+        {
+          "id": "fldEYeJs9CzVxA6wV",
+          "name": "slug",
+          "type": "singleCollaborator"
+        },
+        {
+          "id": "fldNK77Wj6DqfZyxl",
+          "name": "Baths",
+          "type": "number"
+        },
+        {
+          "id": "fldInDKIkBtURyyOA",
+          "name": "Beds",
+          "type": "number"
+        },
+        {
+          "id": "fldhF7jtgiohypC4W",
+          "name": "Sqft",
+          "type": "number"
+        },
+        {
+          "id": "fldt2ya4zFH91TvmJ",
+          "name": "Area",
+          "type": "number"
+        },
+        {
+          "id": "fldjcHm04IUft78CD",
+          "name": "Price",
+          "type": "currency"
+        },
+        {
+          "id": "fld1YZU8OzyORlH02",
+          "name": "createdAt",
+          "type": "createdTime"
+        },
+        {
+          "id": "fldfTxLHKZEWOi8qf",
+          "name": "updatedAt",
+          "type": "lastModifiedTime"
+        },
+        {
+          "id": "fldQx0K4sOMa95oHQ",
+          "name": "imgSrc",
+          "type": "url"
+        },
+        {
+          "id": "fldHSK9uBVpkRlBdk",
+          "name": "detailUrl",
+          "type": "url"
+        },
+        {
+          "id": "fldiH5hgzTlVKmp6z",
+          "name": "statusText",
+          "type": "singleLineText"
+        },
+        {
+          "id": "fldU8S6cWrwy2fS8T",
+          "name": "greatSchoolsUrl",
+          "type": "formula"
+        },
+        {
+          "id": "fldTs13pt84AlOQYm",
+          "name": "Raw home status ",
+          "type": "singleLineText"
+        },
+        {
+          "id": "fldzcrlBZJYGVSCId",
+          "name": "Marketing status simplified ",
+          "type": "singleLineText"
+        },
+        {
+          "id": "flduFhvsLUpZ4rsnD",
+          "name": "Has image",
+          "type": "checkbox"
+        },
+        {
+          "id": "fldX4lf5h6lfm4WAR",
+          "name": "Status type",
+          "type": "singleLineText"
+        },
+        {
+          "id": "fldMzHMiPE6No4y7N",
+          "name": "Address street",
+          "type": "singleLineText"
+        },
+        {
+          "id": "fldFPDUXq9AxAvrdO",
+          "name": "Address city",
+          "type": "singleLineText"
+        },
+        {
+          "id": "fldjc13LDUlqOEUgc",
+          "name": "Address state",
+          "type": "singleLineText"
+        },
+        {
+          "id": "fldGVFasLdVJhGxrM",
+          "name": "Address zipcode",
+          "type": "number"
+        },
+        {
+          "id": "flde6kcTmoug6QH41",
+          "name": "Lat long latitude",
+          "type": "number"
+        },
+        {
+          "id": "fldcnXg9jCb0NHS6f",
+          "name": "Lat long longitude",
+          "type": "number"
+        },
+        {
+          "id": "fldC0uzc7RpPn5ILF",
+          "name": "Hdp data home info days on zillow",
+          "type": "number"
+        },
+        {
+          "id": "fldIcKnIpu14mip6U",
+          "name": "Hdp data home info country",
+          "type": "singleLineText"
+        },
+        {
+          "id": "flddME2cxb2HVwRQ7",
+          "name": "Hdp data home info tax assessed value",
+          "type": "number"
+        },
+        {
+          "id": "fldAv5I8yOuWZSiPG",
+          "name": "Carousel photos composable photo data photo key",
+          "type": "multilineText"
+        },
+        {
+          "id": "fldB7WTb56KNuPdpp",
+          "name": "Found from search url",
+          "type": "url"
+        },
+        {
+          "id": "fldSChQ0ktmYnYnM6",
+          "name": "Hdp data home info date price changed",
+          "type": "number"
+        },
+        {
+          "id": "fld9IwAmF73xYbKqO",
+          "name": "Hdp data home info lot area value",
+          "type": "number"
+        },
+        {
+          "id": "fldm6T38dQZtBc9yE",
+          "name": "Hdp data home info lot area unit",
+          "type": "singleLineText"
+        },
+        {
+          "id": "fldk2RjgnBvqwu36S",
+          "name": "Hdp data home info rent zestimate",
+          "type": "number"
+        },
+        {
+          "id": "fldmxoFkbHHuUzQy3",
+          "name": "Hdp data home info price reduction",
+          "type": "singleLineText"
+        },
+        {
+          "id": "fldZzYIJOVzmPNVKg",
+          "name": "Zestimate",
+          "type": "number"
+        },
+        {
+          "id": "fldlN63KQantdKUpS",
+          "name": "Broker name",
+          "type": "singleLineText"
+        },
+        {
+          "id": "fldVi5YJAOxm2YhKk",
+          "name": "Photos",
+          "type": "url"
+        },
+        {
+          "id": "flde2gAS2oyipn2mn",
+          "name": "Carousel photos composable is static urls",
+          "type": "checkbox"
+        },
+        {
+          "id": "fld66jbv5Hky7Aldd",
+          "name": "carouselBaseUrl",
+          "type": "singleLineText"
+        },
+        {
+          "id": "fldVLLcMsBh8JlHAK",
+          "name": "Thumbnail",
+          "type": "multipleAttachments"
+        },
+        {
+          "id": "fldYdtSWjXPClXrzM",
+          "name": "Gallery",
+          "type": "multipleAttachments"
+        },
+        {
+          "id": "fldqTExYk9ttNhz4c",
+          "name": "GalleryUrls",
+          "type": "multilineText"
+        },
+        {
+          "id": "fld2p49FfYMgPjA4w",
+          "name": "Rebuild Gallery",
+          "type": "checkbox"
+        },
+        {
+          "id": "fldTx8yaTYYjDHpRt",
+          "name": "DownPaymentPct",
+          "type": "number"
+        },
+        {
+          "id": "fldXGPedDEtGDdY9q",
+          "name": "DownPaymentPctUsed",
+          "type": "formula"
+        },
+        {
+          "id": "fldDpxKNYHizB7Nou",
+          "name": "APR",
+          "type": "number"
+        },
+        {
+          "id": "fldSWuR2gRDh3lMBF",
+          "name": "APRUsed",
+          "type": "formula"
+        },
+        {
+          "id": "fldUuPXwyXF23OiDj",
+          "name": "TermYears",
+          "type": "number"
+        },
+        {
+          "id": "fldgThOI6PM9mmmHb",
+          "name": "TermYearsUsed",
+          "type": "formula"
+        },
+        {
+          "id": "fldpTuChWLIn8ay3x",
+          "name": "DownPayment$",
+          "type": "formula"
+        },
+        {
+          "id": "fldQvSgi2vqeJybBh",
+          "name": "LoanAmount",
+          "type": "formula"
+        },
+        {
+          "id": "fldLb98z8iZunmkAO",
+          "name": "MonthlyRate",
+          "type": "formula"
+        },
+        {
+          "id": "fld5m9Co9F7grn7Z1",
+          "name": "TotalPayments",
+          "type": "formula"
+        },
+        {
+          "id": "fldNDGxCJLrAPEyg6",
+          "name": "MonthlyPI",
+          "type": "formula"
+        },
+        {
+          "id": "fldK1cesJzsh8CudJ",
+          "name": "MonthlyTaxManual",
+          "type": "number"
+        },
+        {
+          "id": "fldy1XDMmqr6l2Da8",
+          "name": "MonthlyInsManual",
+          "type": "number"
+        },
+        {
+          "id": "fldzF2BG6a1Xplvdf",
+          "name": "MonthlyTaxEst",
+          "type": "formula"
+        },
+        {
+          "id": "fldSdmiQ4fHf0zISH",
+          "name": "MonthlyInsEst",
+          "type": "formula"
+        },
+        {
+          "id": "fldDSPULkWVlGRNm1",
+          "name": "MonthlyTax",
+          "type": "formula"
+        },
+        {
+          "id": "fldci7qEHyWjWFiX2",
+          "name": "MonthlyInsurance",
+          "type": "formula"
+        },
+        {
+          "id": "fldamzewqAKyMza8L",
+          "name": "MonthlyAllIn",
+          "type": "formula"
+        },
+        {
+          "id": "fld3Sm9dsPjIoI37f",
+          "name": "MonthlyProfit",
+          "type": "formula"
+        },
+        {
+          "id": "fldkAfCRj13WWiG0C",
+          "name": "YearlyProfit",
+          "type": "formula"
+        },
+        {
+          "id": "fldURdIuuDSVgSrfz",
+          "name": "Deals",
+          "type": "multipleRecordLinks"
+        },
+        {
+          "id": "fldNOwUthWuMB7AfI",
+          "name": "Showing Requests",
+          "type": "multipleRecordLinks"
+        }
+      ]
+    },
+    {
+      "id": "tblPU4U1XhDKCrAW0",
+      "name": "Showing Requests",
+      "field_count": 20,
+      "fields": [
+        {
+          "id": "fldY1z9ddYnJHVssD",
+          "name": "Property ID",
+          "type": "singleLineText"
+        },
+        {
+          "id": "fldycJ9tsE8CyHS8c",
+          "name": "First Name",
+          "type": "singleLineText"
+        },
+        {
+          "id": "fldr9EGMCZ7q0rtXh",
+          "name": "Last Name",
+          "type": "singleLineText"
+        },
+        {
+          "id": "fldUNzy3xvdGeEP4i",
+          "name": "Phone",
+          "type": "phoneNumber"
+        },
+        {
+          "id": "fldLX7gYTRC5HiPzf",
+          "name": "Email",
+          "type": "email"
+        },
+        {
+          "id": "fldUVWXLZWLYqNi9E",
+          "name": "Buying With Someone",
+          "type": "singleSelect"
+        },
+        {
+          "id": "fldmKyv5HDCXukqmQ",
+          "name": "Co-Buyer First Name",
+          "type": "singleLineText"
+        },
+        {
+          "id": "fld3APSkZQVbrLGla",
+          "name": "Co-Buyer Last Name",
+          "type": "singleLineText"
+        },
+        {
+          "id": "fldrHG2GJlNXJtBaI",
+          "name": "Co-Buyer Phone",
+          "type": "phoneNumber"
+        },
+        {
+          "id": "fldzsFMMSOeIMtf12",
+          "name": "Co-Buyer Email",
+          "type": "email"
+        },
+        {
+          "id": "fldFb1iV0KrtBAitj",
+          "name": "State",
+          "type": "singleSelect"
+        },
+        {
+          "id": "fldIVJVMg0y6brdYi",
+          "name": "Down Payment Amount",
+          "type": "currency"
+        },
+        {
+          "id": "fldHW233IUp18yXRS",
+          "name": "Monthly Payment Amount",
+          "type": "currency"
+        },
+        {
+          "id": "fldDPbKAtbvjQ6wOI",
+          "name": "Move By Date",
+          "type": "date"
+        },
+        {
+          "id": "fldTLNV1f9HhkdMmA",
+          "name": "Move By Date Flexibility",
+          "type": "singleSelect"
+        },
+        {
+          "id": "fldi5Nz2ImtuyDDAp",
+          "name": "Terms Accepted",
+          "type": "checkbox"
+        },
+        {
+          "id": "fldMq12t8ZIMivVGI",
+          "name": "Submitted At",
+          "type": "dateTime"
+        },
+        {
+          "id": "fld3dJ6HfEbqzSKtg",
+          "name": "Status",
+          "type": "singleSelect"
+        },
+        {
+          "id": "fldGfdOCpYonuaUlM",
+          "name": "Contact",
+          "type": "multipleRecordLinks"
+        },
+        {
+          "id": "fldYYzlOpEHljKmLB",
+          "name": "Listing",
+          "type": "multipleRecordLinks"
+        }
+      ]
+    },
+    {
+      "id": "tblTgMoIGtR0y6m7O",
+      "name": "Applications",
+      "field_count": 38,
+      "fields": [
+        {
+          "id": "fldhtO5NG9Wldbdwx",
+          "name": "First Name",
+          "type": "singleLineText"
+        },
+        {
+          "id": "fldUW1pf8c8fJdw4w",
+          "name": "Last Name",
+          "type": "singleLineText"
+        },
+        {
+          "id": "fldym4d0NlM7VSBAt",
+          "name": "Email",
+          "type": "email"
+        },
+        {
+          "id": "fldBL6pyZ7sP2slKv",
+          "name": "Phone",
+          "type": "phoneNumber"
+        },
+        {
+          "id": "fld3ZImuVkDM6stCn",
+          "name": "Status",
+          "type": "singleSelect"
+        },
+        {
+          "id": "fld6SfiAsvB0RHt5Q",
+          "name": "Housing Status",
+          "type": "singleLineText"
+        },
+        {
+          "id": "flduzsvOTZiEN1PiO",
+          "name": "Occupants",
+          "type": "singleLineText"
+        },
+        {
+          "id": "fldRT4A7eRx0B4Shj",
+          "name": "Employment Status",
+          "type": "singleLineText"
+        },
+        {
+          "id": "fld7mJl4k2IMX6wFS",
+          "name": "Employer",
+          "type": "singleLineText"
+        },
+        {
+          "id": "fldhPmk5OAW053mb7",
+          "name": "Job Title",
+          "type": "singleLineText"
+        },
+        {
+          "id": "fldXTXiof8RLfRsVv",
+          "name": "Years Employed",
+          "type": "singleLineText"
+        },
+        {
+          "id": "fld8fHZhTJGwGz7eE",
+          "name": "Monthly Income",
+          "type": "number"
+        },
+        {
+          "id": "fldI4JqZdq44xIG28",
+          "name": "Has Co-Applicant",
+          "type": "singleLineText"
+        },
+        {
+          "id": "fld5642bpbRZWJE9i",
+          "name": "Co-Applicant Name",
+          "type": "singleLineText"
+        },
+        {
+          "id": "fldzRvjVMe2ZBqYDg",
+          "name": "Co-Applicant Income",
+          "type": "number"
+        },
+        {
+          "id": "fldDx9xkXGtT9qdbg",
+          "name": "Co-Applicant Employer",
+          "type": "singleLineText"
+        },
+        {
+          "id": "fldrNOktAJNYYpfGL",
+          "name": "Preferred State",
+          "type": "singleLineText"
+        },
+        {
+          "id": "fldBqMZuHM1LfQCUD",
+          "name": "Preferred City",
+          "type": "singleLineText"
+        },
+        {
+          "id": "fld9LVtTd3Lg0enJo",
+          "name": "Max Price Range",
+          "type": "singleLineText"
+        },
+        {
+          "id": "fldmgSdxAjxxIIJzq",
+          "name": "Down Payment Amount",
+          "type": "singleLineText"
+        },
+        {
+          "id": "fldLBVZMoDI8MPnWi",
+          "name": "Move-In Timeline",
+          "type": "singleLineText"
+        },
+        {
+          "id": "fldV0NOBPEiTYhgvN",
+          "name": "Min Bedrooms",
+          "type": "singleLineText"
+        },
+        {
+          "id": "fld1CqPUT7cStbtru",
+          "name": "Min Bathrooms",
+          "type": "singleLineText"
+        },
+        {
+          "id": "fldT4SfI49VGITPLp",
+          "name": "Specific Home",
+          "type": "singleLineText"
+        },
+        {
+          "id": "fld6IKAcdfNvkgm1k",
+          "name": "Additional Notes",
+          "type": "multilineText"
+        },
+        {
+          "id": "fldTkdhjDAt2j1gER",
+          "name": "Source",
+          "type": "singleLineText"
+        },
+        {
+          "id": "fldwzvhyczUFvbwA5",
+          "name": "Submitted At",
+          "type": "singleLineText"
+        },
+        {
+          "id": "fldJbRMS5JxzLVWA4",
+          "name": "Active Bankruptcy or Foreclosure",
+          "type": "singleLineText"
+        },
+        {
+          "id": "fldFAHabXENUTuulo",
+          "name": "Active or Recent Lawsuits",
+          "type": "singleLineText"
+        },
+        {
+          "id": "fld47XmF57vE4KoUC",
+          "name": "Deal Decision",
+          "type": "singleLineText"
+        },
+        {
+          "id": "fld1seviFHfLHJMqv",
+          "name": "Recommended Sale Price",
+          "type": "number"
+        },
+        {
+          "id": "fldAjULmk05s3YXEI",
+          "name": "Est Monthly Payment",
+          "type": "number"
+        },
+        {
+          "id": "fldyvuA0zlEHDz0jm",
+          "name": "Est Net Per Month",
+          "type": "number"
+        },
+        {
+          "id": "fld9MiWE0gV45GHKt",
+          "name": "Deal Notes",
+          "type": "multilineText"
+        },
+        {
+          "id": "fldfbE6FTaKTcPoq4",
+          "name": "Contact",
+          "type": "multipleRecordLinks"
+        },
+        {
+          "id": "fldfx4ClsRwhmpUyh",
+          "name": "Leads",
+          "type": "multipleRecordLinks"
+        },
+        {
+          "id": "fldhkkEjd1Bj4Oqfp",
+          "name": "Deals",
+          "type": "multipleRecordLinks"
+        },
+        {
+          "id": "fldh3CR1iSmjishEy",
+          "name": "Tasks",
+          "type": "multipleRecordLinks"
+        }
+      ]
+    },
+    {
+      "id": "tblCLKcbcat9jto3c",
+      "name": "SocialImagePool",
+      "field_count": 9,
+      "fields": [
+        {
+          "id": "fldfpsEGW5jfbTHKf",
+          "name": "filename",
+          "type": "singleLineText"
+        },
+        {
+          "id": "fldw8GPJFtf6VHBQe",
+          "name": "category",
+          "type": "singleSelect"
+        },
+        {
+          "id": "fldvJLQxGSMi3tZiN",
+          "name": "canva_asset_id",
+          "type": "url"
+        },
+        {
+          "id": "fldgzaLIBf64VVUrM",
+          "name": "usage_count",
+          "type": "number"
+        },
+        {
+          "id": "fldtcz6MkkPW8SWZd",
+          "name": "last_used",
+          "type": "dateTime"
+        },
+        {
+          "id": "fldRyVfHOTjixAqr8",
+          "name": "status",
+          "type": "singleSelect"
+        },
+        {
+          "id": "fldM70AHNEdP40h0l",
+          "name": "notes",
+          "type": "multilineText"
+        },
+        {
+          "id": "fld8go3ejkjdSFOcf",
+          "name": "source_url",
+          "type": "url"
+        },
+        {
+          "id": "fldquFf3llM1uNI2K",
+          "name": "classification_confidence",
+          "type": "number"
+        }
+      ]
+    },
+    {
+      "id": "tblg93KZ6mhpiyg1u",
+      "name": "SocialContentQueue",
+      "field_count": 25,
+      "fields": [
+        {
+          "id": "fldETqodcV3Arfhp8",
+          "name": "post_id",
+          "type": "singleLineText"
+        },
+        {
+          "id": "fld310D308XQboyKy",
+          "name": "HOOK",
+          "type": "singleLineText"
+        },
+        {
+          "id": "fldQ8YfVvl2Xw1RES",
+          "name": "SUBHOOK",
+          "type": "singleLineText"
+        },
+        {
+          "id": "fldG9L1tSw2oyyGW9",
+          "name": "DOWN",
+          "type": "singleSelect"
+        },
+        {
+          "id": "fldK0WvKx1tN8g7kZ",
+          "name": "CTA",
+          "type": "singleLineText"
+        },
+        {
+          "id": "fld5iVdy5Z7mlLUvX",
+          "name": "CITY",
+          "type": "singleSelect"
+        },
+        {
+          "id": "flds9vM6yZY7jieIB",
+          "name": "CAPTION",
+          "type": "multilineText"
+        },
+        {
+          "id": "fldrrU28LFAObz3Lz",
+          "name": "FIRST_COMMENT",
+          "type": "multilineText"
+        },
+        {
+          "id": "fldcUmBdSX7Ti6vPw",
+          "name": "EXTERIOR_ASSET_ID",
+          "type": "url"
+        },
+        {
+          "id": "fld4SRqdlclGSJ1zE",
+          "name": "KITCHEN_ASSET_ID",
+          "type": "url"
+        },
+        {
+          "id": "fldkDspp0C63Mzski",
+          "name": "BATH_ASSET_ID",
+          "type": "url"
+        },
+        {
+          "id": "fld2bo19Jozwgto2p",
+          "name": "BEDROOM_ASSET_ID",
+          "type": "url"
+        },
+        {
+          "id": "fldB64QrfRrFPRp9R",
+          "name": "template_variant",
+          "type": "singleSelect"
+        },
+        {
+          "id": "fldf12Dgth1FNLXEV",
+          "name": "status",
+          "type": "singleSelect"
+        },
+        {
+          "id": "fld0jddb39CbvKu42",
+          "name": "canva_design_id",
+          "type": "singleLineText"
+        },
+        {
+          "id": "fldYf6AClRSvdPZRw",
+          "name": "canva_export_url",
+          "type": "url"
+        },
+        {
+          "id": "fldC6FNpj53nyOyB7",
+          "name": "publer_post_id",
+          "type": "singleLineText"
+        },
+        {
+          "id": "fldWgpbAO09ByaBGh",
+          "name": "scheduled_for",
+          "type": "dateTime"
+        },
+        {
+          "id": "fldbH61zmQAbCbA54",
+          "name": "error_log",
+          "type": "multilineText"
+        },
+        {
+          "id": "fldVsGA7ljqDU6i2l",
+          "name": "workflow_status",
+          "type": "singleSelect"
+        },
+        {
+          "id": "fldbrgI9sVsQ4EGG4",
+          "name": "publer_status",
+          "type": "singleLineText"
+        },
+        {
+          "id": "fldyJMBGRW38BJbPZ",
+          "name": "rendered_video_url",
+          "type": "url"
+        },
+        {
+          "id": "fldXY1qqkNgZrQP8b",
+          "name": "drafted_at",
+          "type": "dateTime"
+        },
+        {
+          "id": "fld62t4pz8GbNiukl",
+          "name": "error_message",
+          "type": "multilineText"
+        },
+        {
+          "id": "fldgwinYxzv1LP6tj",
+          "name": "retry_count",
+          "type": "number"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,1151 @@
+{
+  "updatedAt": "2026-04-21T06:07:13.613Z",
+  "createdAt": "2026-04-21T05:17:37.749Z",
+  "id": "5Fjnc5fB1dXH94vV",
+  "name": "FS_Reel_AutoDraft",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "id": "node-01",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "*/10 * * * *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-02",
+      "name": "Airtable: Select Eligible Record",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://api.airtable.com/v0/appLmQyh1ov0NDQ58/tblg93KZ6mhpiyg1u",
+        "authentication": "none",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "filterByFormula",
+              "value": "AND(OR({workflow_status}='',{workflow_status}='ready'),{HOOK}!='',{SUBHOOK}!='',{CTA}!='',{CAPTION}!='',{EXTERIOR_ASSET_ID}!='')"
+            },
+            {
+              "name": "maxRecords",
+              "value": "1"
+            },
+            {
+              "name": "sort[0][field]",
+              "value": "post_id"
+            },
+            {
+              "name": "sort[0][direction]",
+              "value": "asc"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer REDACTED"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "node-03",
+      "name": "IF: Has Record",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cond-has-record",
+              "leftValue": "={{ $json.records.length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "node-04",
+      "name": "Airtable: Mark Rendering",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        0
+      ],
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.airtable.com/v0/appLmQyh1ov0NDQ58/tblg93KZ6mhpiyg1u/{{ $('IF: Has Record').item.json.records[0].id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer REDACTED"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ fields: { workflow_status: 'rendering', error_message: '' } }) }}"
+      }
+    },
+    {
+      "id": "node-05",
+      "name": "Code: Validate Record",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const record = $('IF: Has Record').first().json.records[0];\nconst fields = record.fields;\nconst errors = [];\n\nconst required = ['HOOK','SUBHOOK','CTA','CAPTION','EXTERIOR_ASSET_ID'];\nfor (const f of required) {\n  if (!fields[f] || String(fields[f]).trim() === '') {\n    errors.push(`Missing required field: ${f}`);\n  }\n}\n\nif (fields.HOOK && fields.HOOK.length > 40) {\n  errors.push(`HOOK too long (${fields.HOOK.length}/40 chars)`);\n}\nif (fields.SUBHOOK && fields.SUBHOOK.length > 40) {\n  errors.push(`SUBHOOK too long (${fields.SUBHOOK.length}/40 chars)`);\n}\n\nlet cta_line1 = '';\nlet cta_line2 = '';\nif (fields.CTA) {\n  let parts;\n  if (fields.CTA.includes('\\n')) {\n    parts = fields.CTA.split('\\n').map(s => s.trim()).filter(s => s);\n  } else if (fields.CTA.includes('.')) {\n    parts = fields.CTA.split('.').map(s => s.trim()).filter(s => s);\n  } else {\n    parts = [fields.CTA.trim()];\n  }\n  cta_line1 = parts[0] || '';\n  cta_line2 = parts[1] || '';\n  if (cta_line1.length > 45) errors.push(`CTA line 1 too long (${cta_line1.length}/45)`);\n  if (cta_line2.length > 45) errors.push(`CTA line 2 too long (${cta_line2.length}/45)`);\n}\n\nconst extUrl = fields.EXTERIOR_ASSET_ID || '';\nif (extUrl && !extUrl.match(/^https?:\\/\\/.+/)) {\n  errors.push('EXTERIOR_ASSET_ID is not a valid URL');\n}\n\nconst valid = errors.length === 0;\n\nreturn [{\n  json: {\n    valid,\n    errors,\n    recordId: record.id,\n    hook: fields.HOOK,\n    subhook: fields.SUBHOOK,\n    cta: fields.CTA,\n    cta_line1,\n    cta_line2,\n    caption: fields.CAPTION,\n    first_comment: fields.FIRST_COMMENT || '',\n    city: fields.CITY || '',\n    exterior_url: fields.EXTERIOR_ASSET_ID,\n    kitchen_url: fields.KITCHEN_ASSET_ID || '',\n    bath_url: fields.BATH_ASSET_ID || '',\n    bedroom_url: fields.BEDROOM_ASSET_ID || '',\n    retry_count: fields.retry_count || 0\n  }\n}];"
+      }
+    },
+    {
+      "id": "node-06",
+      "name": "IF: Validation Passed",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1100,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cond-valid",
+              "leftValue": "={{ $json.valid }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "node-07",
+      "name": "Code: Build Image List",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1320,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const prev = $('Code: Validate Record').first().json;\n\nconst image_urls = [prev.exterior_url];\nif (prev.kitchen_url) image_urls.push(prev.kitchen_url);\nif (prev.bath_url) image_urls.push(prev.bath_url);\nif (prev.bedroom_url) image_urls.push(prev.bedroom_url);\n\nconst warnings = [];\nif (image_urls.length < 4) {\n  warnings.push(`Only ${image_urls.length}/4 images available`);\n}\n\nreturn [{\n  json: {\n    ...prev,\n    image_urls,\n    image_count: image_urls.length,\n    warnings\n  }\n}];"
+      }
+    },
+    {
+      "id": "node-08",
+      "name": "HTTP: Validate Images",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1540,
+        0
+      ],
+      "parameters": {
+        "method": "HEAD",
+        "url": "={{ $json.image_urls[0] }}",
+        "options": {
+          "timeout": 15000,
+          "redirect": {
+            "redirect": {
+              "followRedirects": true,
+              "maxRedirects": 5
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "node-09",
+      "name": "Code: Build Render Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1760,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const data = $('Code: Build Image List').first().json;\n\nconst city = data.city || '';\nconst subheadline = city ? `Available Now in ${city}` : 'Available Now';\n\nconst payload = {\n  image_urls: data.image_urls,\n  headline_line1: data.hook.toUpperCase(),\n  headline_line2: data.subhook.toUpperCase(),\n  subheadline: subheadline,\n  cta_line1: data.cta_line1,\n  cta_line2: data.cta_line2\n};\n\nreturn [{\n  json: {\n    ...data,\n    render_payload: payload\n  }\n}];"
+      }
+    },
+    {
+      "id": "node-10",
+      "name": "HTTP: Render Reel",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1980,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://rawfunds-ffmpeg-render.onrender.com/render-reel",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.render_payload) }}",
+        "options": {
+          "timeout": 120000,
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "node-11",
+      "name": "HTTP: Upload to Publer",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2200,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://app.publer.com/api/v1/media/from-url",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer REDACTED"
+            },
+            {
+              "name": "Publer-Workspace-Id",
+              "value": "6996bb9c274064adca2a0cbe"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ media: [{ url: $json.video_url || $json.url }] }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "node-12",
+      "name": "HTTP: Poll Publer Upload",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2420,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ 'https://app.publer.com/api/v1/job_status/' + $('HTTP: Upload to Publer').first().json.job_id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer REDACTED"
+            },
+            {
+              "name": "Publer-Workspace-Id",
+              "value": "6996bb9c274064adca2a0cbe"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "node-12b",
+      "name": "Wait: Upload Poll Delay",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2530,
+        200
+      ],
+      "parameters": {
+        "amount": 5,
+        "unit": "seconds"
+      }
+    },
+    {
+      "id": "node-12c",
+      "name": "IF: Upload Complete",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2640,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cond-upload-done",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "complete",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "node-13",
+      "name": "HTTP: Create Draft",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2860,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://app.publer.com/api/v1/posts/schedule",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer REDACTED"
+            },
+            {
+              "name": "Publer-Workspace-Id",
+              "value": "6996bb9c274064adca2a0cbe"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ bulk: { state: 'draft', posts: [{ networks: { facebook: { type: 'video', text: $('Code: Build Render Payload').first().json.caption + '\\n\\n' + $('Code: Build Render Payload').first().json.first_comment, media: [{ id: ($json.payload && $json.payload[0]) ? $json.payload[0].id : '', type: 'video' }] } }, accounts: [{ id: '69d03eb8d8776303e3535e30' }] }] } }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "node-14",
+      "name": "HTTP: Poll Draft Job",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3080,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ 'https://app.publer.com/api/v1/job_status/' + $('HTTP: Create Draft').first().json.job_id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer REDACTED"
+            },
+            {
+              "name": "Publer-Workspace-Id",
+              "value": "6996bb9c274064adca2a0cbe"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "node-14b",
+      "name": "Wait: Draft Poll Delay",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        3190,
+        200
+      ],
+      "parameters": {
+        "amount": 5,
+        "unit": "seconds"
+      }
+    },
+    {
+      "id": "node-14c",
+      "name": "IF: Draft Complete",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3300,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cond-draft-done",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "complete",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "node-15",
+      "name": "Airtable: Mark Success",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3780,
+        0
+      ],
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.airtable.com/v0/appLmQyh1ov0NDQ58/tblg93KZ6mhpiyg1u/{{ $('Code: Validate Record').first().json.recordId }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer REDACTED"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ fields: { workflow_status: 'drafted', publer_status: 'draft', publer_post_id: $json.id || '', rendered_video_url: $('HTTP: Render Reel').first().json.video_url || $('HTTP: Render Reel').first().json.url || '', drafted_at: new Date().toISOString(), error_message: '' } }) }}"
+      }
+    },
+    {
+      "id": "node-16",
+      "name": "Error Handler: Mark Failure",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1760,
+        400
+      ],
+      "parameters": {
+        "jsCode": "const validationData = $('Code: Validate Record').first().json;\nconst recordId = validationData.recordId;\nconst currentRetry = validationData.retry_count || 0;\nconst newRetry = currentRetry + 1;\nconst errorMsg = $json.error?.message || $json.message || 'Unknown error in pipeline';\nconst newStatus = newRetry >= 3 ? 'failed_permanent' : 'failed';\n\nreturn [{\n  json: {\n    recordId,\n    updatePayload: {\n      fields: {\n        workflow_status: newStatus,\n        error_message: `[${new Date().toISOString()}] ${errorMsg}`,\n        retry_count: newRetry\n      }\n    }\n  }\n}];"
+      },
+      "continueOnFail": true
+    },
+    {
+      "id": "node-16b",
+      "name": "Airtable: Write Failure",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1980,
+        400
+      ],
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.airtable.com/v0/appLmQyh1ov0NDQ58/tblg93KZ6mhpiyg1u/{{ $json.recordId }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer REDACTED"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.updatePayload) }}"
+      }
+    },
+    {
+      "id": "node-val-fail",
+      "name": "Error Handler: Validation Failed",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1320,
+        300
+      ],
+      "parameters": {
+        "jsCode": "const data = $('Code: Validate Record').first().json;\nconst currentRetry = data.retry_count || 0;\nconst newRetry = currentRetry + 1;\nconst newStatus = newRetry >= 3 ? 'failed_permanent' : 'failed';\n\nreturn [{\n  json: {\n    recordId: data.recordId,\n    updatePayload: {\n      fields: {\n        workflow_status: newStatus,\n        error_message: `[${new Date().toISOString()}] Validation failed: ${data.errors.join('; ')}`,\n        retry_count: newRetry\n      }\n    }\n  }\n}];"
+      }
+    },
+    {
+      "id": "node-val-fail-write",
+      "name": "Airtable: Write Validation Failure",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1540,
+        300
+      ],
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.airtable.com/v0/appLmQyh1ov0NDQ58/tblg93KZ6mhpiyg1u/{{ $json.recordId }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer REDACTED"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.updatePayload) }}"
+      }
+    },
+    {
+      "id": "node-webhook",
+      "name": "Manual Test Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        -200
+      ],
+      "parameters": {
+        "path": "fs-reel-test",
+        "httpMethod": "POST",
+        "responseMode": "lastNode"
+      },
+      "webhookId": "5abe2f64-7da7-4c00-8433-2ca23bb44873"
+    },
+    {
+      "id": "node-draft-check",
+      "name": "Code: Check Draft Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3420,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const draftResult = $json;\nconst failures = (draftResult.payload && draftResult.payload.failures) ? draftResult.payload.failures : {};\nconst hasFailures = Object.keys(failures).length > 0;\n\nif (hasFailures) {\n  const msgs = [];\n  for (const [key, errs] of Object.entries(failures)) {\n    for (const err of errs) {\n      msgs.push((err.provider || 'unknown') + ': ' + (err.message || 'Unknown error'));\n    }\n  }\n  return [{ json: { draftSucceeded: false, errorMessage: msgs.join('; ') } }];\n}\n\nreturn [{ json: { draftSucceeded: true, errorMessage: '' } }];"
+      }
+    },
+    {
+      "id": "node-draft-if",
+      "name": "IF: Draft Succeeded",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3540,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "version": 2,
+            "leftValue": "",
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-draft-ok",
+              "leftValue": "={{ $json.draftSucceeded }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "node-get-draft-id",
+      "name": "HTTP: Get Draft Post ID",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3660,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://app.publer.com/api/v1/posts",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer REDACTED"
+            },
+            {
+              "name": "Publer-Workspace-Id",
+              "value": "6996bb9c274064adca2a0cbe"
+            }
+          ]
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "state",
+              "value": "draft"
+            },
+            {
+              "name": "limit",
+              "value": "1"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "node-draft-fail",
+      "name": "Error Handler: Draft Failed",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3540,
+        400
+      ],
+      "parameters": {
+        "jsCode": "const validationData = $('Code: Validate Record').first().json;\nconst recordId = validationData.recordId;\nconst currentRetry = validationData.retry_count || 0;\nconst newRetry = currentRetry + 1;\nconst draftResult = $('Code: Check Draft Result').first().json;\nconst errorMsg = draftResult.errorMessage || 'Unknown Publer draft error';\nconst newStatus = newRetry >= 3 ? 'failed_permanent' : 'failed';\n\nreturn [{\n  json: {\n    recordId,\n    updatePayload: {\n      fields: {\n        workflow_status: newStatus,\n        publer_status: 'draft_failed',\n        error_message: '[' + new Date().toISOString() + '] Draft failed: ' + errorMsg,\n        retry_count: newRetry\n      }\n    }\n  }\n}];"
+      }
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Airtable: Select Eligible Record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Airtable: Select Eligible Record": {
+      "main": [
+        [
+          {
+            "node": "IF: Has Record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: Has Record": {
+      "main": [
+        [
+          {
+            "node": "Airtable: Mark Rendering",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Airtable: Mark Rendering": {
+      "main": [
+        [
+          {
+            "node": "Code: Validate Record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Validate Record": {
+      "main": [
+        [
+          {
+            "node": "IF: Validation Passed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: Validation Passed": {
+      "main": [
+        [
+          {
+            "node": "Code: Build Image List",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Error Handler: Validation Failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Error Handler: Validation Failed": {
+      "main": [
+        [
+          {
+            "node": "Airtable: Write Validation Failure",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Build Image List": {
+      "main": [
+        [
+          {
+            "node": "HTTP: Validate Images",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP: Validate Images": {
+      "main": [
+        [
+          {
+            "node": "Code: Build Render Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Build Render Payload": {
+      "main": [
+        [
+          {
+            "node": "HTTP: Render Reel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP: Render Reel": {
+      "main": [
+        [
+          {
+            "node": "HTTP: Upload to Publer",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Error Handler: Mark Failure",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP: Upload to Publer": {
+      "main": [
+        [
+          {
+            "node": "HTTP: Poll Publer Upload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP: Poll Publer Upload": {
+      "main": [
+        [
+          {
+            "node": "IF: Upload Complete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: Upload Complete": {
+      "main": [
+        [
+          {
+            "node": "HTTP: Create Draft",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait: Upload Poll Delay",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait: Upload Poll Delay": {
+      "main": [
+        [
+          {
+            "node": "HTTP: Poll Publer Upload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP: Create Draft": {
+      "main": [
+        [
+          {
+            "node": "HTTP: Poll Draft Job",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP: Poll Draft Job": {
+      "main": [
+        [
+          {
+            "node": "IF: Draft Complete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: Draft Complete": {
+      "main": [
+        [
+          {
+            "node": "Code: Check Draft Result",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait: Draft Poll Delay",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait: Draft Poll Delay": {
+      "main": [
+        [
+          {
+            "node": "HTTP: Poll Draft Job",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Error Handler: Mark Failure": {
+      "main": [
+        [
+          {
+            "node": "Airtable: Write Failure",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manual Test Webhook": {
+      "main": [
+        [
+          {
+            "node": "Airtable: Select Eligible Record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Check Draft Result": {
+      "main": [
+        [
+          {
+            "node": "IF: Draft Succeeded",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: Draft Succeeded": {
+      "main": [
+        [
+          {
+            "node": "HTTP: Get Draft Post ID",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Error Handler: Draft Failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP: Get Draft Post ID": {
+      "main": [
+        [
+          {
+            "node": "Airtable: Mark Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Error Handler: Draft Failed": {
+      "main": [
+        [
+          {
+            "node": "Airtable: Write Failure",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Chicago",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "saveExecutionProgress": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": {
+    "node:Schedule Trigger": {
+      "recurrenceRules": []
+    }
+  },
+  "meta": null,
+  "pinData": null,
+  "versionId": "49451caf-b48f-441d-8802-768580ac7447",
+  "activeVersionId": null,
+  "versionCounter": 36,
+  "triggerCount": 2,
+  "shared": [
+    {
+      "updatedAt": "2026-04-21T05:17:37.752Z",
+      "createdAt": "2026-04-21T05:17:37.752Z",
+      "role": "workflow:owner",
+      "workflowId": "5Fjnc5fB1dXH94vV",
+      "projectId": "Q7ytaIj7oyQpddlr",
+      "project": {
+        "updatedAt": "2026-02-03T04:38:34.404Z",
+        "createdAt": "2026-02-03T04:34:14.320Z",
+        "id": "Q7ytaIj7oyQpddlr",
+        "name": "Raw Funds <info@rawfunds.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "d42639c1-6ec3-44cd-b664-d9c56171bec3",
+        "projectRelations": [
+          {
+            "updatedAt": "2026-02-03T04:34:14.320Z",
+            "createdAt": "2026-02-03T04:34:14.320Z",
+            "userId": "d42639c1-6ec3-44cd-b664-d9c56171bec3",
+            "projectId": "Q7ytaIj7oyQpddlr",
+            "user": {
+              "updatedAt": "2026-04-22T18:48:22.000Z",
+              "createdAt": "2026-02-03T04:34:13.932Z",
+              "id": "d42639c1-6ec3-44cd-b664-d9c56171bec3",
+              "email": "info@rawfunds.com",
+              "firstName": "Raw",
+              "lastName": "Funds",
+              "personalizationAnswers": {
+                "version": "v4",
+                "personalization_survey_submitted_at": "2026-02-03T04:38:47.373Z",
+                "personalization_survey_n8n_version": "2.6.3",
+                "companySize": "<20",
+                "companyType": "saas",
+                "role": "business-owner",
+                "reportedSource": "google"
+              },
+              "settings": {
+                "userActivated": true,
+                "easyAIWorkflowOnboarded": true,
+                "firstSuccessfulWorkflowId": "Lry8UR2aE1vKkmNN5VILU",
+                "userActivatedAt": 1771218033027,
+                "npsSurvey": {
+                  "waitingForResponse": true,
+                  "ignoredCount": 2,
+                  "lastShownAt": 1774248148055
+                }
+              },
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2026-04-22",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
+}

@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Finally Settled</title>
+<meta name="description" content="No Bank Needed Homeownership. Finally Settled helps you buy a home in Alabama and Georgia without a traditional mortgage.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* === RESET & BASE === */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: #222;
+  background: #FFFFFF;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+a { text-decoration: none; color: inherit; }
+img { max-width: 100%; display: block; }
+ul { list-style: none; }
+
+/* === UTILITY === */
+.container { width: 100%; max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+.section-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #1a4731;
+  margin-bottom: 8px;
+}
+.section-label-white { color: rgba(255,255,255,0.8); }
+
+/* === BUTTONS === */
+.btn {
+  display: inline-block;
+  padding: 14px 28px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+  border: 2px solid transparent;
+  text-align: center;
+}
+.btn-primary {
+  background: #1a4731;
+  color: #fff;
+  border-color: #1a4731;
+}
+.btn-primary:hover {
+  background: #0f2a1d;
+  border-color: #0f2a1d;
+}
+.btn-outline-white {
+  background: transparent;
+  color: #fff;
+  border-color: #fff;
+}
+.btn-outline-white:hover {
+  background: rgba(255,255,255,0.1);
+}
+.btn-white {
+  background: #fff;
+  color: #1a4731;
+  border-color: #fff;
+}
+.btn-white:hover {
+  background: #f0f0f0;
+}
+
+/* === NAV === */
+.nav {
+  background: #fff;
+  border-bottom: 1px solid #e5e5e5;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.nav-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+.nav-brand {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #1a4731;
+}
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+.nav-links a {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #444;
+  transition: color 0.2s;
+}
+.nav-links a:hover { color: #1a4731; }
+.nav-cta .btn { padding: 10px 20px; font-size: 0.9rem; }
+.nav-sub {
+  background: #f5f5f5;
+  text-align: center;
+  padding: 8px 20px;
+  font-size: 0.85rem;
+  color: #555;
+  font-weight: 500;
+}
+.nav-hamburger {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+}
+.nav-hamburger span {
+  display: block;
+  width: 24px;
+  height: 2px;
+  background: #333;
+  transition: transform 0.3s, opacity 0.3s;
+}
+.mobile-menu {
+  display: none;
+  flex-direction: column;
+  background: #fff;
+  border-top: 1px solid #e5e5e5;
+  padding: 16px 20px;
+  gap: 12px;
+}
+.mobile-menu a {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #444;
+  padding: 8px 0;
+}
+.mobile-menu .btn {
+  text-align: center;
+  margin-top: 8px;
+}
+.mobile-menu.open { display: flex; }
+
+@media (max-width: 768px) {
+  .nav-links { display: none; }
+  .nav-cta { display: none; }
+  .nav-hamburger { display: flex; }
+}
+
+/* === HERO === */
+.hero {
+  background: #1a4731;
+  color: #fff;
+  padding: 80px 0 60px;
+}
+.hero h1 {
+  font-size: 2.8rem;
+  font-weight: 800;
+  line-height: 1.15;
+  margin-bottom: 20px;
+}
+.hero .subhead {
+  font-size: 1.15rem;
+  line-height: 1.7;
+  color: rgba(255,255,255,0.9);
+  max-width: 680px;
+  margin-bottom: 32px;
+}
+.hero-buttons {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 48px;
+}
+.hero-stats {
+  display: flex;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+.stat-badge {
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 12px;
+  padding: 16px 24px;
+  text-align: center;
+  min-width: 160px;
+}
+.stat-badge .stat-value {
+  font-size: 1.5rem;
+  font-weight: 800;
+  display: block;
+  margin-bottom: 2px;
+}
+.stat-badge .stat-label {
+  font-size: 0.85rem;
+  color: rgba(255,255,255,0.75);
+}
+
+@media (max-width: 768px) {
+  .hero { padding: 48px 0 40px; }
+  .hero h1 { font-size: 2rem; }
+  .hero .subhead { font-size: 1rem; }
+  .hero-stats { gap: 12px; }
+  .stat-badge { min-width: 140px; padding: 12px 16px; flex: 1; }
+  .stat-badge .stat-value { font-size: 1.25rem; }
+}
+
+/* === THREE STEPS === */
+.steps {
+  background: #f5f5f5;
+  padding: 80px 0;
+}
+.steps-header {
+  text-align: center;
+  margin-bottom: 48px;
+}
+.steps-header h2 {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #111;
+  margin-bottom: 12px;
+}
+.steps-header .subhead {
+  font-size: 1.05rem;
+  color: #555;
+}
+.steps-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 32px;
+  margin-bottom: 40px;
+}
+.step-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 36px 28px;
+  text-align: center;
+}
+.step-number {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #1a4731;
+  color: #fff;
+  font-size: 1.4rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+}
+.step-card h3 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #111;
+  margin-bottom: 12px;
+}
+.step-card p {
+  font-size: 0.95rem;
+  color: #555;
+  line-height: 1.6;
+}
+.steps-cta {
+  text-align: center;
+}
+.steps-cta a {
+  color: #1a4731;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: color 0.2s;
+}
+.steps-cta a:hover { color: #0f2a1d; }
+
+@media (max-width: 768px) {
+  .steps { padding: 48px 0; }
+  .steps-grid { grid-template-columns: 1fr; gap: 20px; }
+  .steps-header h2 { font-size: 1.6rem; }
+}
+
+/* === WHY CHOOSE US === */
+.why {
+  background: #fff;
+  padding: 80px 0;
+}
+.why-header {
+  text-align: center;
+  margin-bottom: 48px;
+}
+.why-header h2 {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #111;
+  margin-bottom: 12px;
+}
+.why-header .subhead {
+  font-size: 1.05rem;
+  color: #555;
+  max-width: 680px;
+  margin: 0 auto;
+}
+.why-checklist {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px 32px;
+  margin-bottom: 24px;
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.why-checklist .check-item {
+  font-size: 1rem;
+  color: #222;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.check-icon {
+  color: #1a4731;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.why-bold {
+  text-align: center;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #1a4731;
+  margin: 28px 0 40px;
+}
+.comparison {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  max-width: 800px;
+  margin: 0 auto 40px;
+}
+.comparison-col {
+  background: #f9f9f9;
+  border-radius: 16px;
+  padding: 28px 24px;
+}
+.comparison-col h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 16px;
+  color: #111;
+}
+.comparison-col ul { display: flex; flex-direction: column; gap: 10px; }
+.comparison-col li {
+  font-size: 0.95rem;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.comparison-col.dont li {
+  color: #888;
+  text-decoration: line-through;
+}
+.why-callout {
+  background: #f5f5f5;
+  border-radius: 12px;
+  padding: 24px 28px;
+  text-align: center;
+  max-width: 800px;
+  margin: 0 auto;
+  font-size: 1rem;
+  color: #333;
+  line-height: 1.7;
+}
+
+@media (max-width: 768px) {
+  .why { padding: 48px 0; }
+  .why-header h2 { font-size: 1.6rem; }
+  .why-checklist { grid-template-columns: 1fr; }
+  .comparison { grid-template-columns: 1fr; gap: 16px; }
+}
+
+/* === FIND A HOME === */
+.find {
+  background: #1a4731;
+  color: #fff;
+  padding: 80px 0;
+}
+.find h2 {
+  font-size: 2rem;
+  font-weight: 800;
+  margin-bottom: 20px;
+}
+.find .body-text {
+  font-size: 1.05rem;
+  line-height: 1.7;
+  color: rgba(255,255,255,0.9);
+  margin-bottom: 24px;
+  max-width: 760px;
+}
+.find-checklist {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.find-checklist .check-item {
+  font-size: 1rem;
+  color: rgba(255,255,255,0.9);
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.find .closing {
+  font-size: 1.05rem;
+  line-height: 1.7;
+  color: rgba(255,255,255,0.9);
+  margin-bottom: 32px;
+  max-width: 760px;
+}
+.find .closing strong {
+  color: #fff;
+}
+
+@media (max-width: 768px) {
+  .find { padding: 48px 0; }
+  .find h2 { font-size: 1.6rem; }
+}
+
+/* === FAQ === */
+.faq {
+  background: #f5f5f5;
+  padding: 80px 0;
+}
+.faq-header {
+  text-align: center;
+  margin-bottom: 48px;
+}
+.faq-header h2 {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #111;
+  margin-bottom: 12px;
+}
+.faq-list {
+  max-width: 800px;
+  margin: 0 auto 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.faq-item {
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.faq-question {
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #111;
+  text-align: left;
+  gap: 12px;
+}
+.faq-question:hover { background: #fafafa; }
+.faq-chevron {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  transition: transform 0.3s ease;
+}
+.faq-item.open .faq-chevron {
+  transform: rotate(180deg);
+}
+.faq-answer {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.35s ease;
+}
+.faq-answer-inner {
+  padding: 0 24px 20px;
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: #444;
+}
+.faq-cta {
+  text-align: center;
+}
+
+@media (max-width: 768px) {
+  .faq { padding: 48px 0; }
+  .faq-header h2 { font-size: 1.6rem; }
+  .faq-question { font-size: 0.95rem; padding: 16px 20px; }
+  .faq-answer-inner { padding: 0 20px 16px; }
+}
+
+/* === FINAL CTA === */
+.final-cta {
+  background: #1a4731;
+  color: #fff;
+  padding: 80px 0;
+  text-align: center;
+}
+.final-cta h2 {
+  font-size: 2.2rem;
+  font-weight: 800;
+  margin-bottom: 16px;
+}
+.final-cta .subhead {
+  font-size: 1.1rem;
+  color: rgba(255,255,255,0.9);
+  margin-bottom: 32px;
+  max-width: 560px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.final-cta-buttons {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+  .final-cta { padding: 48px 0; }
+  .final-cta h2 { font-size: 1.7rem; }
+}
+
+/* === FOOTER === */
+.footer {
+  background: #111111;
+  color: #fff;
+  padding: 48px 0 32px;
+}
+.footer-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+.footer-brand {
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+.footer-socials {
+  display: flex;
+  gap: 16px;
+}
+.footer-socials a {
+  color: rgba(255,255,255,0.7);
+  transition: color 0.2s;
+}
+.footer-socials a:hover { color: #fff; }
+.footer-socials svg { width: 22px; height: 22px; }
+.footer-divider {
+  border: none;
+  border-top: 1px solid rgba(255,255,255,0.15);
+  margin-bottom: 24px;
+}
+.footer-commitment {
+  margin-bottom: 24px;
+}
+.footer-commitment h4 {
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: rgba(255,255,255,0.9);
+}
+.footer-commitment p {
+  font-size: 0.85rem;
+  line-height: 1.7;
+  color: rgba(255,255,255,0.6);
+}
+.footer-legal {
+  font-size: 0.8rem;
+  line-height: 1.7;
+  color: rgba(255,255,255,0.45);
+  margin-bottom: 24px;
+}
+.footer-bottom {
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+</style>
+</head>
+<body>
+
+<!-- ===== NAV ===== -->
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="/" class="nav-brand">Finally Settled</a>
+    <div class="nav-links">
+      <a href="/request-showing">Request Showing</a>
+      <a href="/agents">Partner Agents</a>
+      <a href="/blog">Blog</a>
+    </div>
+    <div class="nav-cta">
+      <a href="/apply" class="btn btn-primary">Start Pre-Approval</a>
+    </div>
+    <button class="nav-hamburger" aria-label="Menu" onclick="toggleMobileMenu()">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="/request-showing">Request Showing</a>
+    <a href="/agents">Partner Agents</a>
+    <a href="/blog">Blog</a>
+    <a href="/apply" class="btn btn-primary">Start Pre-Approval</a>
+  </div>
+  <div class="nav-sub">Built on experience helping 500+ homebuyers</div>
+</nav>
+
+<!-- ===== HERO ===== -->
+<section class="hero">
+  <div class="container">
+    <h1>No Bank Needed Homeownership</h1>
+    <p class="subhead">Turned down by the bank? You still have options. Finally Settled helps you buy a home in Alabama and Georgia without a traditional mortgage. If you have a down payment, we'll match you with homes that offer a simple path to ownership.</p>
+    <div class="hero-buttons">
+      <a href="/apply" class="btn btn-primary">Start Pre-Approval</a>
+      <a href="#" class="btn btn-outline-white">Browse Homes</a>
+    </div>
+    <div class="hero-stats">
+      <div class="stat-badge">
+        <span class="stat-value">$70K+</span>
+        <span class="stat-label">Homes from</span>
+      </div>
+      <div class="stat-badge">
+        <span class="stat-value">35 Days</span>
+        <span class="stat-label">Avg. move-in</span>
+      </div>
+      <div class="stat-badge">
+        <span class="stat-value">20%</span>
+        <span class="stat-label">Min. down</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== THREE STEPS ===== -->
+<section class="steps">
+  <div class="container">
+    <div class="steps-header">
+      <div class="section-label">THE PROCESS</div>
+      <h2>Three Steps to Your New Home</h2>
+      <p class="subhead">Traditional banks make it complicated. We make it simple.</p>
+    </div>
+    <div class="steps-grid">
+      <div class="step-card">
+        <div class="step-number">1</div>
+        <h3>Start in Minutes</h3>
+        <p>No hard credit pull. Just a quick verification step so we can approve you for the right options.</p>
+      </div>
+      <div class="step-card">
+        <div class="step-number">2</div>
+        <h3>Find Your Home</h3>
+        <p>Browse homes in Alabama and Georgia. Filter by down payment amount, beds, baths, location, and what matters to you.</p>
+      </div>
+      <div class="step-card">
+        <div class="step-number">3</div>
+        <h3>Move In</h3>
+        <p>Select your home, sign the agreement, and move in, typically within 35 days.</p>
+      </div>
+    </div>
+    <div class="steps-cta">
+      <a href="/how-it-works">Learn More About Our Process &rarr;</a>
+    </div>
+  </div>
+</section>
+
+<!-- ===== WHY CHOOSE US ===== -->
+<section class="why">
+  <div class="container">
+    <div class="why-header">
+      <div class="section-label">WHY FINALLY SETTLED</div>
+      <h2>Why People Choose Finally Settled</h2>
+      <p class="subhead">If you've been turned down by a bank but have a down payment saved and stable income, you're exactly who we help.</p>
+    </div>
+    <div class="why-checklist">
+      <div class="check-item"><span class="check-icon">&#10003;</span> No Bank Approval Needed</div>
+      <div class="check-item"><span class="check-icon">&#10003;</span> Bad Credit &amp; Evictions OK</div>
+      <div class="check-item"><span class="check-icon">&#10003;</span> Self-Employed Welcome</div>
+      <div class="check-item"><span class="check-icon">&#10003;</span> Flexible Down Payments</div>
+      <div class="check-item"><span class="check-icon">&#10003;</span> Affordable Monthly Payments (often same as rent)</div>
+      <div class="check-item"><span class="check-icon">&#10003;</span> You Maintain, You Build Equity</div>
+    </div>
+    <p class="why-bold">We look at your ability to pay, not your credit score.</p>
+    <div class="comparison">
+      <div class="comparison-col need">
+        <h3>What You Need</h3>
+        <ul>
+          <li><span class="check-icon">&#10003;</span> Down payment (typically 20%+)</li>
+          <li><span class="check-icon">&#10003;</span> Proof of income or ability to pay</li>
+          <li><span class="check-icon">&#10003;</span> Desire to own your home</li>
+        </ul>
+      </div>
+      <div class="comparison-col dont">
+        <h3>What You DON'T Need</h3>
+        <ul>
+          <li>Perfect credit score</li>
+          <li>Bank approval</li>
+          <li>Years of employment history</li>
+        </ul>
+      </div>
+    </div>
+    <div class="why-callout">
+      <strong>Bottom line:</strong> If you have money saved and can make monthly payments, there's likely a path to homeownership &mdash; even without a bank.
+    </div>
+  </div>
+</section>
+
+<!-- ===== FIND A HOME ===== -->
+<section class="find">
+  <div class="container">
+    <h2>&#127969; Don't See a Home You Love? We'll Help You Find One.</h2>
+    <p class="body-text">At Finally Settled, you don't have to wait. We'll help you find and secure the right home for your situation. If we don't currently have a property available that fits your needs, our team will work with you to:</p>
+    <div class="find-checklist">
+      <div class="check-item"><span class="check-icon">&#10003;</span> Identify homes that meet your price range, location, and payment goals</div>
+      <div class="check-item"><span class="check-icon">&#10003;</span> Coordinate with local sellers and agents to make them eligible for our program</div>
+      <div class="check-item"><span class="check-icon">&#10003;</span> Handle the paperwork, negotiations, and setup</div>
+    </div>
+    <p class="closing">Whether it's one of our homes or one you pick yourself, Finally Settled can help you achieve the goal of ownership without bank approval. <strong>You choose the home &mdash; we help you make it yours.</strong></p>
+    <a href="#" class="btn btn-white">Get Started</a>
+  </div>
+</section>
+
+<!-- ===== FAQ ===== -->
+<section class="faq">
+  <div class="container">
+    <div class="faq-header">
+      <div class="section-label">COMMON QUESTIONS</div>
+      <h2>Straight Answers to What You're Wondering</h2>
+    </div>
+    <div class="faq-list">
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFaq(this)">
+          <span>&#127968; What makes Finally Settled different from a bank or mortgage company?</span>
+          <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </button>
+        <div class="faq-answer">
+          <div class="faq-answer-inner">We don't require traditional credit approvals or lengthy underwriting. We focus on your ability to make the payment and your commitment to homeownership. Income + down payment = you're already ahead.</div>
+        </div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFaq(this)">
+          <span>&#128179; Do you check credit?</span>
+          <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </button>
+        <div class="faq-answer">
+          <div class="faq-answer-inner">Soft background and income verification only. No hard credit pull. Your score is not the main factor &mdash; your income, stability, and honesty are.</div>
+        </div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFaq(this)">
+          <span>&#128176; How much do I need for a down payment?</span>
+          <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </button>
+        <div class="faq-answer">
+          <div class="faq-answer-inner">Typically 20%+ of the home price. The larger the down payment, the lower your monthly payment.</div>
+        </div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFaq(this)">
+          <span>&#128295; Who handles maintenance, taxes, and insurance?</span>
+          <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </button>
+        <div class="faq-answer">
+          <div class="faq-answer-inner">You do &mdash; because you're the homeowner in every practical sense. This builds true equity and financial responsibility while protecting your investment.</div>
+        </div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFaq(this)">
+          <span>&#128683; What if I have bad credit, collections, or past evictions?</span>
+          <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </button>
+        <div class="faq-answer">
+          <div class="faq-answer-inner">That's okay. We specialize in helping buyers who've had life happen. We give second chances when others don't.</div>
+        </div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFaq(this)">
+          <span>&#129534; What homes are available?</span>
+          <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </button>
+        <div class="faq-answer">
+          <div class="faq-answer-inner">Affordable single-family homes in safe, livable neighborhoods where payments are comparable to local rent.</div>
+        </div>
+      </div>
+    </div>
+    <div class="faq-cta">
+      <a href="#" class="btn btn-primary">Get Started</a>
+    </div>
+  </div>
+</section>
+
+<!-- ===== FINAL CTA ===== -->
+<section class="final-cta">
+  <div class="container">
+    <h2>Ready to Live the Dream?</h2>
+    <p class="subhead">Stop waiting for a bank to say yes. Start your pre-approval today and see what's possible.</p>
+    <div class="final-cta-buttons">
+      <a href="/apply" class="btn btn-white">Start Pre-Approval</a>
+      <a href="#" class="btn btn-outline-white">Browse Homes</a>
+    </div>
+  </div>
+</section>
+
+<!-- ===== FOOTER ===== -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-top">
+      <div class="footer-brand">Finally Settled</div>
+      <div class="footer-socials">
+        <a href="https://www.facebook.com/finallysettled" target="_blank" rel="noopener" aria-label="Facebook">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+        </a>
+        <a href="https://twitter.com/finallysettled" target="_blank" rel="noopener" aria-label="Twitter / X">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+        </a>
+        <a href="https://www.instagram.com/finallysettled" target="_blank" rel="noopener" aria-label="Instagram">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+        </a>
+      </div>
+    </div>
+    <hr class="footer-divider">
+    <div class="footer-commitment">
+      <h4>Our Commitment</h4>
+      <p>At Finally Settled, we believe everyone deserves a fair shot at homeownership &mdash; regardless of credit score or past hardships. We're committed to operating with honesty, transparency, and compassion, providing clear terms, fair pricing, and realistic pathways to ownership. Every applicant is treated with respect, every contract is written in plain English, and every home is offered with the goal of helping our buyers build long-term stability and pride of ownership.</p>
+    </div>
+    <p class="footer-legal">Finally Settled is not a bank, mortgage company, or traditional lender. All homes are made available through Owner Financing, Lease-Option, or Bond-for-Title agreements in accordance with applicable state laws. Finally Settled does not provide mortgage loans, credit repair services, or legal advice. All financial and legal obligations between buyer and seller are documented in writing before move-in. Buyers are encouraged to review all contracts with an independent real estate attorney or advisor before signing. Approval is not guaranteed, and all applicants must demonstrate the ability to make consistent monthly payments.</p>
+    <div class="footer-bottom">
+      <span>Equal Housing Opportunity</span>
+      <span>Finally Settled &copy; 2025</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+function toggleMobileMenu() {
+  document.getElementById('mobileMenu').classList.toggle('open');
+}
+
+function toggleFaq(btn) {
+  var item = btn.parentElement;
+  var wasOpen = item.classList.contains('open');
+  // Close all
+  var items = document.querySelectorAll('.faq-item');
+  for (var i = 0; i < items.length; i++) {
+    items[i].classList.remove('open');
+    items[i].querySelector('.faq-answer').style.maxHeight = null;
+  }
+  // Open clicked if it was closed
+  if (!wasOpen) {
+    item.classList.add('open');
+    var answer = item.querySelector('.faq-answer');
+    answer.style.maxHeight = answer.scrollHeight + 'px';
+  }
+}
+</script>
+<!--End of Tawk.to Script-->
+</body>
+</html>

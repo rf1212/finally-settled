@@ -1,0 +1,3070 @@
+{
+  "updatedAt": "2026-04-15T02:18:22.588Z",
+  "createdAt": "2026-04-04T18:08:21.032Z",
+  "id": "K63Ut64YfW8Ll6BF",
+  "name": "Finally Settled Viral Clip Factory v3",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "id": "schedule-1",
+      "name": "Every 48 Minutes",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "30 */3 * * *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "manual-1",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        200
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "webhook-1",
+      "name": "Test Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        400
+      ],
+      "webhookId": "finally-settled-test",
+      "parameters": {
+        "path": "finally-settled-test",
+        "httpMethod": "POST",
+        "responseMode": "lastNode"
+      }
+    },
+    {
+      "id": "build-result-1",
+      "name": "Build Video Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1500,
+        100
+      ],
+      "parameters": {
+        "jsCode": "// Build Video Result \u2014 Apify flow with native n8n polling\nconst pickData = $('Extract Video Data').first().json;\nconst statusData = $('Check Apify Status').first().json;\nconst resultsIn = $input.first().json;\n\nconst pollStatus = (statusData && statusData.data && statusData.data.status) || '';\nconst TERMINAL = ['SUCCEEDED','FAILED','ABORTED','TIMED-OUT','TIMED_OUT'];\nconst terminalReached = TERMINAL.includes(pollStatus);\nconst apifySucceeded = (pollStatus === 'SUCCEEDED');\n\nlet storageUrl = '';\nlet success = false;\nlet fileSize = 0;\nlet duration = 0;\nlet apifyTitle = '';\nlet errorReason = '';\n\nif (!terminalReached) {\n  errorReason = 'apify_run_timeout';\n} else if (!apifySucceeded) {\n  errorReason = 'apify_run_' + String(pollStatus || 'unknown').toLowerCase();\n} else {\n  const arr = Array.isArray(resultsIn)\n    ? resultsIn\n    : (resultsIn && Array.isArray(resultsIn.data) ? resultsIn.data : [resultsIn]);\n  const item = arr && arr[0];\n  if (item && typeof item === 'object') {\n    storageUrl = item.storageUrl || item.downloadUrl || '';\n    success = !!((item.status === 'completed' || item.success === true) && storageUrl);\n    fileSize = item.fileSizeBytes || item.fileSize || 0;\n    duration = item.duration || 0;\n    apifyTitle = item.title || '';\n    if (!success) errorReason = 'apify_no_storage_url';\n  } else {\n    errorReason = 'apify_empty_dataset';\n  }\n}\n\nreturn [{ json: {\n  ...pickData,\n  videoStorageUrl: success ? storageUrl : '',\n  videoStored: success,\n  videoFileSize: fileSize,\n  clipDuration: duration,\n  fullDuration: duration,\n  viralHook: '',\n  clipReason: '',\n  transcriptExcerpt: '',\n  apifyTitle: apifyTitle,\n  hasTranscript: false,\n  errorReason: errorReason\n}}];"
+      }
+    },
+    {
+      "id": "publer-post-1",
+      "name": "Create Publer Draft",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2200,
+        100
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://app.publer.com/api/v1/posts/schedule",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer REDACTED"
+            },
+            {
+              "name": "Publer-Workspace-Id",
+              "value": "6996bb9c274064adca2a0cbe"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ (() => {\n  const d = $('Upload to Publer Media').first().json;\n  const mediaId = d.publerMediaId;\n  const thumbs = d.publerThumbnails || [];\n  const text = d.caption;\n  const firstComment = d.firstComment || '';\n  const fbId = '69d03eb8d8776303e3535e30';\n\n  const commentObj = firstComment ? [{ text: firstComment, delay: { duration: 0, unit: 'Minute' } }] : [];\n\n  if (mediaId) {\n    const thumbArr = thumbs.map(t => ({ id: t.id, small: t.small, real: t.real }));\n    const mediaObj = {\n      id: mediaId,\n      thumbnails: thumbArr,\n      default_thumbnail: 0\n    };\n    return JSON.stringify({\n      bulk: {\n        state: 'scheduled',\n        posts: [{\n          networks: {\n            facebook: { type: 'video', media: [mediaObj], text: text }\n          },\n          accounts: [\n            { id: fbId, comments: commentObj }\n          ]\n        }]\n      }\n    });\n  } else {\n    return JSON.stringify({ error: 'No media uploaded - pipeline should have stopped at Check Video OK' });\n  }\n})() }}",
+        "options": {}
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "b93f582d-1485-4970-98b5-bb1449e769f1",
+      "name": "Build Packaging Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1900,
+        100
+      ],
+      "parameters": {
+        "jsCode": "var data = $input.first().json;\nvar brand = data.brand || 'finallysettled';\nvar brands = {\n  rawfunds: { name: 'RawFunds', niche: 'passive income, side hustles, financial freedom, investing, wealth building, entrepreneurship, money tips, recession-proof income', cta: 'rawfunds.com \\u2014 link in bio', ctaUrl: 'rawfunds.com', tags: '#passiveincome #sidehustle #financialfreedom #investing #wealthbuilding #moneytips #entrepreneur', tone: 'Bold, provocative, anti-establishment. Challenge Wall Street, banks, and the 9-to-5 grind.', forbidden: ['ghostjobindex.com','ghostjobindex','ghost jobs','ghost job','finallysettled.com','proxitap.com','housing crisis','mortgage rates','corporate landlords','flight deals','airport tips','aviation'], audience: 'people trapped in a 9-to-5 who want passive income and financial freedom', tieBackConcepts: ['financial freedom','passive income','escape the 9-to-5'] },\n  finallysettled: { name: 'Finally Settled', niche: 'housing crisis, credit score system rigged, private equity buying real estate, corporate landlords, mortgage rates crushing buyers, homeownership, wealth gap, housing affordability', cta: 'finallysettled.com \\u2014 link in bio', ctaUrl: 'finallysettled.com', tags: '#housingcrisis #homeownership #firsttimebuyer #realestate #mortgagerates #corporatelandlords #housingpolicy #wealthgap #affordablehousing', tone: 'Angry, justice-oriented, anti-establishment. Expose how the system is rigged against first-time buyers.', forbidden: ['ghostjobindex.com','ghostjobindex','ghost jobs','ghost job','rawfunds.com','proxitap.com','layoffs','layoff','hiring freeze','job market','passive income','side hustle','flight deals','airport tips','aviation'], audience: 'first-time homebuyers and renters crushed by corporate landlords and rigged credit systems', tieBackConcepts: ['homeownership','affordability','no bank needed'] },\n  proxitap: { name: 'ProxiTap', niche: 'travel hacks, airport tips, flight deals, travel technology, digital nomad, travel rewards, cheap flights', cta: 'proxitap.com \\u2014 travel smarter. link in bio', ctaUrl: 'proxitap.com', tags: '#traveltips #flightdeals #traveltech #airport #aviation #digitalnomad #travelhacks #cheapflights #airlinenews', tone: 'Smart, practical, insider knowledge. Help travelers save money and travel better.', forbidden: ['networking','executive','business','professional','entrepreneur','b2b','linkedin','corporate','leadership','boardroom','c-suite','sales team','meeting','ghostjobindex.com','ghostjobindex','ghost jobs','ghost job','rawfunds.com','finallysettled.com','layoffs','layoff','hiring freeze','passive income','side hustle','housing crisis','mortgage rates','corporate landlords'], audience: 'smart travelers, digital nomads, flight-deal hunters, points-and-miles hackers', tieBackConcepts: ['travel smarter','save on flights','hidden travel hacks'] }\n};\nvar ctx = brands[brand] || brands.finallysettled;\nvar excerpt = data.transcriptExcerptUsed || '';\nvar clipEmotion = data.clipEmotion || 'pain';\nvar FEED_MAP = {\n  'legacy':      { feedType: 'legacy',      hookPrimary: ['aspiration','bold_statement','relatable_pain'], hookSecondary: ['curiosity_gap'],   promptPool: ['aspiration','emotional_story'] },\n  'market':      { feedType: 'market',      hookPrimary: ['shocking_stat','contrarian','bold_statement'],  hookSecondary: ['question'],         promptPool: ['controversy','fear_loss'] },\n  'louisiana':   { feedType: 'local',       hookPrimary: ['aspiration','curiosity_gap','bold_statement'],  hookSecondary: ['relatable_pain'],   promptPool: ['local_story','aspiration'] },\n  'indiana':     { feedType: 'local',       hookPrimary: ['aspiration','curiosity_gap','bold_statement'],  hookSecondary: ['relatable_pain'],   promptPool: ['local_story','aspiration'] },\n  'georgia':     { feedType: 'local',       hookPrimary: ['aspiration','curiosity_gap','bold_statement'],  hookSecondary: ['relatable_pain'],   promptPool: ['local_story','aspiration'] },\n  'alabama':     { feedType: 'local',       hookPrimary: ['aspiration','curiosity_gap','bold_statement'],  hookSecondary: ['relatable_pain'],   promptPool: ['local_story','aspiration'] },\n  'payment':     { feedType: 'payment',     hookPrimary: ['shocking_stat','bold_statement','question'],    hookSecondary: ['curiosity_gap'],    promptPool: ['payment_hook'] },\n  'alternative': { feedType: 'alternative', hookPrimary: ['curiosity_gap','bold_statement','question'],    hookSecondary: ['contrarian'],       promptPool: ['curiosity','aspiration'] },\n  'credit':      { feedType: 'credit',      hookPrimary: ['question','bold_statement','contrarian'],       hookSecondary: ['curiosity_gap'],    promptPool: ['controversy','curiosity'] },\n  'pain':        { feedType: 'pain',        hookPrimary: ['relatable_pain','bold_statement','question'],   hookSecondary: ['curiosity_gap'],    promptPool: ['emotional_story','fear_loss'] }\n};\nfunction simpleHash(str) { var hash = 0; for (var i = 0; i < str.length; i++) { hash = ((hash << 5) - hash) + str.charCodeAt(i); hash = hash & hash; } return Math.abs(hash); }\nvar recordId = data.airtableRecordId || data.videoId || ('fallback_' + Date.now());\nvar seed = simpleHash(recordId);\nvar feedName = data.feedName || '';\nvar feedConfig = FEED_MAP[feedName] || null;\nvar usedFallbackFeedMapping = false;\nif (!feedConfig) {\n  feedConfig = FEED_MAP['pain'];\n  feedName = feedName || 'unknown';\n  usedFallbackFeedMapping = true;\n}\nvar feedType = feedConfig.feedType;\nvar fullHookPool = feedConfig.hookPrimary.concat(feedConfig.hookSecondary);\nvar hookStyle = fullHookPool[seed % fullHookPool.length];\nvar promptType = feedConfig.promptPool[seed % feedConfig.promptPool.length];\nvar hookInstructions = {\n  'bold_statement': 'First line: a bold, declarative statement. No questions. Pure conviction. Under 15 words.',\n  'curiosity_gap': 'First line: hint at a hidden truth but withhold the answer. Under 15 words.',\n  'relatable_pain': 'First line: name a specific frustration the audience lives with. Use you language. Under 15 words.',\n  'question': 'First line: a provocative rhetorical question. Under 15 words.',\n  'shocking_stat': 'First line: lead with a jarring number or statistic from the clip. Under 15 words.',\n  'contrarian': 'First line: attack a popular belief. Stop doing X or X is a lie framing. Under 15 words.',\n  'aspiration': 'First line: paint the desired outcome vividly. Under 15 words.'\n};\n\n// --- v5: Feed-type headline word guidance ---\nvar FEED_HEADLINE_WORDS = {\n  pain: 'struggle, stuck, trapped, crushed, rigged, broken',\n  credit: 'denied, banks, score, rejected, rigged, unfair',\n  alternative: 'hidden, secret, loophole, overlooked, underground',\n  payment: 'payment, cost, fee, price, overcharged, afford',\n  local: 'neighborhood, community, area, local, displaced, priced out',\n  market: 'crash, bubble, collapse, squeeze, crisis, surge',\n  legacy: 'dream, build, own, generational, wealth, freedom'\n};\nvar feedHeadlineWords = FEED_HEADLINE_WORDS[feedType] || FEED_HEADLINE_WORDS.pain;\n\n// --- v5: Fetch recent headlines from Airtable for dedup ---\nvar recentHeadlines = [];\ntry {\n  var atUrl = 'https://api.airtable.com/v0/apptgY5Qc6HvgZKB8/tbliG4q5QElW9rV5Q';\n  atUrl += '?maxRecords=30&sort%5B0%5D%5Bfield%5D=Created&sort%5B0%5D%5Bdirection%5D=desc';\n  atUrl += '&fields%5B%5D=Thumb%20Title&fields%5B%5D=Headline%20Fingerprint';\n  var atResp = await this.helpers.httpRequest({\n    method: 'GET',\n    url: atUrl,\n    headers: { 'Authorization': 'Bearer REDACTED' }\n  });\n  if (atResp && atResp.records) {\n    for (var r = 0; r < atResp.records.length; r++) {\n      var f = atResp.records[r].fields;\n      if (f && f['Thumb Title']) {\n        recentHeadlines.push(String(f['Thumb Title']));\n      }\n    }\n  }\n} catch (e) { /* non-blocking: if fetch fails, skip dedup guidance */ }\n\n// --- Build avoid section ---\nvar avoidSection = '';\nif (recentHeadlines.length > 0) {\n  avoidSection = 'AVOID THESE RECENT HEADLINES (do NOT repeat or closely paraphrase):\\n';\n  for (var a = 0; a < recentHeadlines.length; a++) {\n    avoidSection += '- ' + recentHeadlines[a] + '\\n';\n  }\n}\n\nvar forbiddenLine = '';\nif (ctx.forbidden && ctx.forbidden.length) { forbiddenLine = 'FORBIDDEN TERMS in ALL fields: ' + ctx.forbidden.join(', ') + '. If any appear, regenerate.'; }\nvar lines = [];\nlines.push('You are a social media packaging specialist for ' + ctx.name + '.');\nlines.push('Brand tone: ' + ctx.tone);\nlines.push('Audience: ' + ctx.audience);\nlines.push('');\nlines.push('A clip has already been selected. Your job is ONLY to write the packaging.');\nlines.push('DO NOT select a clip. DO NOT output start_seconds or end_seconds.');\nlines.push('');\nlines.push('CLIP TRANSCRIPT EXCERPT:');\nlines.push(excerpt || '[No excerpt available]');\nlines.push('');\nlines.push('CLIP EMOTION: ' + clipEmotion);\nlines.push('FEED TYPE: ' + feedType);\nlines.push('');\nlines.push('ASSIGNED HOOK STYLE [' + hookStyle + ']: ' + hookInstructions[hookStyle]);\nlines.push('YOU MUST USE THIS EXACT HOOK STYLE. Do not substitute a different style.');\nlines.push('');\nlines.push('ASSIGNED PROMPT TYPE: ' + promptType);\nlines.push('Frame the caption through this lens. Do not ignore this assignment.');\nlines.push('');\nlines.push('CAPTION FORMAT (STRICT):');\nlines.push('- Line 1: The hook (following hook style above). Short, punchy, under 15 words.');\nlines.push('- Lines 2-4: 2-4 short sentences. Simple language. Grade 6 reading level.');\nlines.push('- Every caption MUST tie back to one of: ' + ctx.tieBackConcepts.join(', '));\nlines.push('- MUST end with: \\ud83d\\udd17 ' + ctx.cta + '  ' + ctx.tags);\nlines.push('- Total caption: 50-100 words. NOT 150-250. SHORT.');\nlines.push('');\nlines.push('FIRST COMMENT RULES:');\nlines.push('- Maximum 2 sentences.');\nlines.push('- Must either extend the story OR include CTA.');\nlines.push('- Must include ONE of: a payment reference, no bank needed, or comment INFO.');\nlines.push('');\nlines.push('THUMBNAIL HEADLINE (2-LINE FORMAT, STRICT):');\nlines.push('- thumbLine1: 3-6 words, ALL CAPS. The HOOK. Grounded in the clip transcript. Pull a specific number, name, or shocking detail.');\nlines.push('- thumbLine2: 5-10 words, ALL CAPS. EXPANDS on line 1 with a specific detail from the transcript.');\nlines.push('- Feed type is \"' + feedType + '\" \\u2014 try to use words like: ' + feedHeadlineWords);\nlines.push('- BOTH lines must be UNIQUE to THIS specific clip. NEVER use generic titles.');\nlines.push('- Each video MUST have a DIFFERENT headline.');\nif (avoidSection) { lines.push(''); lines.push(avoidSection); }\nlines.push('');\nif (forbiddenLine) { lines.push(forbiddenLine); lines.push(''); }\nlines.push('BRAND RULES: Only CTA allowed: ' + ctx.ctaUrl + '. No other brand or URL.');\nlines.push('');\nlines.push('RESPOND ONLY WITH RAW JSON:');\nlines.push('{\"hook_style\":\"' + hookStyle + '\",\"prompt_type\":\"' + promptType + '\",\"generation_prompt\":\"<1 sentence>\",\"caption\":\"<full caption>\",\"firstComment\":\"<1-2 sentences>\",\"thumbLine1\":\"<3-6 words ALL CAPS>\",\"thumbLine2\":\"<5-10 words ALL CAPS>\",\"tags\":\"' + ctx.tags + '\"}');\nvar prompt = lines.join('\\n');\nvar reqBody = JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.85, maxOutputTokens: 1500, responseMimeType: 'application/json' } });\nreturn [{ json: Object.assign({}, data, { geminiRequestBody: reqBody, ctxCta: ctx.cta, ctxTags: ctx.tags, ctxCtaUrl: ctx.ctaUrl, ctxForbidden: ctx.forbidden, genHookStyle: hookStyle, genPromptType: promptType, genFeedType: feedType, genFeedName: feedName, genUsedFallbackFeedMapping: usedFallbackFeedMapping, promptVersion: 'v5', companyName: brand, recentHeadlines: recentHeadlines }) }];"
+      }
+    },
+    {
+      "id": "23688e1f-30b9-47ea-93fe-4552a0515ae5",
+      "name": "Gemini Caption API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2100,
+        100
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=REDACTED",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "options": {
+          "timeout": 60000
+        },
+        "jsonBody": "={{ $json.geminiRequestBody }}"
+      },
+      "retryOnFail": true,
+      "maxTries": 4,
+      "waitBetweenTries": 15000,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "8389ae51-f488-4099-99be-94e7e1c5082b",
+      "name": "Parse LLM Caption",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2300,
+        100
+      ],
+      "parameters": {
+        "jsCode": "var pd = $('Build Packaging Prompt').first().json;\nvar gr = $input.first().json;\nvar caption = '', firstComment = '', thumbTitle = '', hook = '';\nvar thumbLine1 = '', thumbLine2 = '';\nvar headlineFingerprint = '';\nvar parseOk = false, parseError = '';\nvar hookStyle = '', promptType = '', generationPrompt = '', tags = '';\nvar FEED_FALLBACK_HEADLINES = {\n  pain:        [['STUCK RENTING AGAIN','NO WAY OUT OF THIS TRAP'],['SYSTEM IS RIGGED','THEY PROFIT WHILE YOU STRUGGLE'],['CRUSHED BY DESIGN','THE GAME WAS NEVER FAIR']],\n  credit:      [['BANK SAID NO','YOUR CREDIT SCORE IS A CAGE'],['DENIED AGAIN','THE SYSTEM PUNISHES THE POOR'],['SCORE MEANS NOTHING','BANKS DECIDE WHO WINS']],\n  alternative: [['HIDDEN PATH EXISTS','WHAT THEY NEVER TOLD YOU ABOUT'],['SECRET LOOPHOLE','MOST PEOPLE WILL NEVER KNOW THIS'],['UNDERGROUND METHOD','SKIP THE BANK ENTIRELY']],\n  payment:     [['OVERCHARGED AGAIN','THE REAL COST THEY HIDE FROM YOU'],['PAYMENT TRAP','WHY YOUR MONTHLY BILL KEEPS RISING'],['FEE AFTER FEE','THE PRICE YOU WERE NEVER TOLD']],\n  local:       [['NEIGHBORHOOD GONE','PRICED OUT OF YOUR OWN COMMUNITY'],['DISPLACED FAMILIES','CORPORATE MONEY TOOK YOUR BLOCK'],['LOCAL CRISIS','YOUR AREA IS BEING BOUGHT UP']],\n  market:      [['MARKET CRASHING','THE SQUEEZE IS JUST GETTING STARTED'],['BUBBLE BURST','WHAT THE NUMBERS ARE REALLY SAYING'],['CRISIS COMING','THIS CHART SHOULD TERRIFY YOU']],\n  legacy:      [['BUILD YOUR OWN','GENERATIONAL WEALTH STARTS HERE'],['OWN THE DREAM','FREEDOM IS CLOSER THAN YOU THINK'],['WEALTH TRANSFER','YOUR FAMILY DESERVES THIS PATH']]\n};\nvar FALLBACK_POOLS = {\n  finallysettled: {\n    hooks: ['They don\\'t want you to own a home.','Your rent check is making someone else rich.','The system was never built for you.','Homeownership shouldn\\'t be this hard.','You\\'re paying their mortgage, not yours.','They priced you out on purpose.','Corporate landlords are buying your neighborhood.','The housing market is rigged.'],\n    comments: ['Comment INFO to learn more.','This is the reality they hide from you. Comment INFO.','Your rent builds someone else\\'s wealth. Comment INFO.','We break this system down. Comment INFO to learn how.']\n  },\n  rawfunds: {\n    hooks: ['They need you broke to control you.','Your 9-to-5 was designed to keep you trapped.','Rich people don\\'t work for money.','Your paycheck is keeping you poor.'],\n    comments: ['Comment INFO to learn more.','They don\\'t teach this in school. Comment INFO.']\n  },\n  proxitap: {\n    hooks: ['Airlines don\\'t want you to know this.','You\\'re overpaying for every flight.','This travel hack saves hundreds.','Stop booking flights the wrong way.'],\n    comments: ['Comment INFO to learn more.','Save this for your next trip. Comment INFO.']\n  }\n};\nfunction simpleHash(str) { var hash = 0; for (var i = 0; i < str.length; i++) { hash = ((hash << 5) - hash) + str.charCodeAt(i); hash = hash & hash; } return Math.abs(hash); }\nvar brand = pd.brand || pd.companyName || 'finallysettled';\nvar pool = FALLBACK_POOLS[brand] || FALLBACK_POOLS.finallysettled;\nvar recordId = pd.airtableRecordId || pd.videoId || ('fb_' + Date.now());\nvar seed = simpleHash(recordId);\nvar FILLER_WORDS = ['is','the','a','an','and','to','of','in','for','on','it','this','that','are','was','be','has','have','do','does','not','but','or','with','you','your','they','them','their','my','our','we','he','she','from','at','by','will','can','just','been','being','so','if','no','up','out'];\nfunction makeFingerprint(text) {\n  var t = String(text).toLowerCase().replace(/[^a-z0-9\\s]/g, '').trim();\n  var words = t.split(/\\s+/).filter(function(w) { return w.length > 0 && FILLER_WORDS.indexOf(w) === -1; });\n  return words.join(' ');\n}\nfunction wordOverlap(fp1, fp2) {\n  if (!fp1 || !fp2) return 0;\n  var a = fp1.split(' ');\n  var b = fp2.split(' ');\n  if (a.length === 0 || b.length === 0) return 0;\n  var setB = {};\n  for (var i = 0; i < b.length; i++) { setB[b[i]] = true; }\n  var overlap = 0;\n  for (var j = 0; j < a.length; j++) { if (setB[a[j]]) overlap++; }\n  var union = {};\n  for (var k = 0; k < a.length; k++) { union[a[k]] = true; }\n  for (var m = 0; m < b.length; m++) { union[b[m]] = true; }\n  var unionSize = Object.keys(union).length;\n  return unionSize > 0 ? overlap / unionSize : 0;\n}\nvar recentHeadlines = pd.recentHeadlines || [];\nvar feedType = pd.genFeedType || 'pain';\nvar feedFallbacks = FEED_FALLBACK_HEADLINES[feedType] || FEED_FALLBACK_HEADLINES.pain;\nvar fallbackPair = feedFallbacks[seed % feedFallbacks.length];\nvar FALLBACK_LINE1 = fallbackPair[0];\nvar FALLBACK_LINE2 = fallbackPair[1];\nvar FALLBACK_HOOK = pool.hooks[seed % pool.hooks.length];\nvar FALLBACK_COMMENT = pool.comments[seed % pool.comments.length];\nvar FALLBACK_CAPTION = FALLBACK_HOOK + '\\nThere are other ways.\\n\\n\ud83d\udd17 ' + (pd.ctxCta || 'finallysettled.com \u2014 link in bio') + '  ' + (pd.ctxTags || '#housingcrisis #homeownership #firsttimebuyer');\nfunction splitSentences(text) {\n  var cleaned = String(text).replace(/\\[\\d+\\.?\\d*s\\]\\s*/g, '');\n  var parts = cleaned.replace(/\\n+/g, '. ').split(/(?<=[.!?])\\s+/);\n  var result = [];\n  for (var i = 0; i < parts.length; i++) {\n    var s = parts[i].trim();\n    if (s.length > 15) result.push(s);\n  }\n  return result;\n}\ntry {\n  var txt = '';\n  if (gr && gr.candidates && gr.candidates[0] && gr.candidates[0].content && gr.candidates[0].content.parts && gr.candidates[0].content.parts[0]) {\n    txt = gr.candidates[0].content.parts[0].text || '';\n  }\n  txt = String(txt).replace(/^```json\\s*/i, '').replace(/^```\\s*/i, '').replace(/```$/i, '').trim();\n  var match = txt.match(/\\{[\\s\\S]*\\}/);\n  if (match) {\n    var p = JSON.parse(match[0]);\n    caption = String(p.caption || '');\n    firstComment = String(p.firstComment || '');\n    hookStyle = String(p.hook_style || '');\n    promptType = String(p.prompt_type || '');\n    generationPrompt = String(p.generation_prompt || '');\n    tags = String(p.tags || '');\n    thumbLine1 = String(p.thumbLine1 || '').toUpperCase().trim();\n    thumbLine2 = String(p.thumbLine2 || '').toUpperCase().trim();\n    if (!thumbLine1 && p.thumbTitle) {\n      var oldTitle = String(p.thumbTitle).toUpperCase().trim();\n      var titleWords = oldTitle.split(/\\s+/);\n      if (titleWords.length > 4) {\n        thumbLine1 = titleWords.slice(0, 3).join(' ');\n        thumbLine2 = titleWords.slice(3).join(' ');\n      } else {\n        thumbLine1 = oldTitle;\n        thumbLine2 = '';\n      }\n    }\n    thumbTitle = thumbLine1 + (thumbLine2 ? '\\n' + thumbLine2 : '');\n    var captionLines = caption.split('\\n').filter(function(l) { return l.trim().length > 0; });\n    hook = captionLines.length > 0 ? captionLines[0] : '';\n    if (caption && caption.length >= 20) { parseOk = true; }\n    else { parseError = 'Caption too short (' + (caption ? caption.length : 0) + ' chars)'; }\n  } else { parseError = 'No JSON in Gemini packaging response'; }\n} catch (e) { parseError = 'Packaging parse error: ' + (e && e.message); }\nvar usedFallback = false;\nif (!parseOk) {\n  var excerpt = String(pd.transcriptExcerptUsed || pd.excerpt || '');\n  var sentences = splitSentences(excerpt);\n  if (sentences.length >= 2) {\n    var rawHook = sentences[0];\n    if (rawHook.length > 90) rawHook = rawHook.substring(0, 87) + '...';\n    hook = rawHook;\n    var bodyParts = [];\n    for (var bp = 1; bp < Math.min(sentences.length, 4); bp++) {\n      var sent = sentences[bp];\n      if (sent.length > 100) sent = sent.substring(0, 97) + '...';\n      bodyParts.push(sent);\n    }\n    caption = hook + '\\n' + bodyParts.join(' ') + '\\n\\n\ud83d\udd17 ' + (pd.ctxCta || 'finallysettled.com \u2014 link in bio') + '  ' + (pd.ctxTags || '#housingcrisis #homeownership #firsttimebuyer');\n    if (sentences.length > 3) {\n      firstComment = sentences[3] + ' Comment INFO to learn more.';\n    } else if (sentences.length > 2) {\n      firstComment = sentences[2] + ' Comment INFO to learn more.';\n    } else {\n      firstComment = sentences[1] + ' Comment INFO to learn more.';\n    }\n    generationPrompt = 'FALLBACK: transcript-grounded (Gemini unavailable)';\n  } else {\n    hook = FALLBACK_HOOK;\n    caption = FALLBACK_CAPTION;\n    firstComment = FALLBACK_COMMENT;\n    generationPrompt = 'FALLBACK: no transcript + Gemini failed';\n  }\n  thumbLine1 = FALLBACK_LINE1;\n  thumbLine2 = FALLBACK_LINE2;\n  thumbTitle = FALLBACK_LINE1 + '\\n' + FALLBACK_LINE2;\n  hookStyle = 'bold_statement';\n  promptType = 'fear_loss';\n  usedFallback = true;\n}\nvar headlineFP = makeFingerprint(thumbTitle);\nheadlineFingerprint = headlineFP;\nvar isSimilar = false;\nvar similarTo = '';\nif (!usedFallback && recentHeadlines.length > 0) {\n  for (var h = 0; h < recentHeadlines.length; h++) {\n    var recentFP = makeFingerprint(recentHeadlines[h]);\n    if (headlineFP === recentFP) {\n      isSimilar = true;\n      similarTo = recentHeadlines[h];\n      break;\n    }\n    if (wordOverlap(headlineFP, recentFP) >= 0.70) {\n      isSimilar = true;\n      similarTo = recentHeadlines[h];\n      break;\n    }\n  }\n}\nif (isSimilar) {\n  var altSeed = seed + 1;\n  var altPair = feedFallbacks[altSeed % feedFallbacks.length];\n  thumbLine1 = altPair[0];\n  thumbLine2 = altPair[1];\n  thumbTitle = thumbLine1 + '\\n' + thumbLine2;\n  headlineFingerprint = makeFingerprint(thumbTitle);\n}\nvar ctaUrl = pd.ctxCtaUrl || '';\nvar forbidden = pd.ctxForbidden || [];\nvar brandViolation = '';\nif (!usedFallback && caption) {\n  if (ctaUrl && caption.toLowerCase().indexOf(ctaUrl.toLowerCase()) === -1) {\n    brandViolation = 'Caption missing brand CTA (' + ctaUrl + ')';\n  }\n  var wrongUrls = ['ghostjobindex.com','rawfunds.com','finallysettled.com','proxitap.com'].filter(function(u) { return u.toLowerCase() !== ctaUrl.toLowerCase(); });\n  var allText = (caption + ' ' + firstComment + ' ' + thumbTitle + ' ' + hook).toLowerCase();\n  for (var i = 0; i < wrongUrls.length; i++) {\n    if (allText.indexOf(wrongUrls[i]) !== -1) { brandViolation = (brandViolation ? brandViolation + '; ' : '') + 'Wrong brand URL: ' + wrongUrls[i]; break; }\n  }\n  if (!brandViolation) {\n    for (var j = 0; j < forbidden.length; j++) {\n      if (allText.indexOf(forbidden[j].toLowerCase()) !== -1) { brandViolation = 'Forbidden term: ' + forbidden[j]; break; }\n    }\n  }\n}\nvar startSec = Number(pd.clipStart);\nvar endSec = Number(pd.clipEnd);\nvar clipLen = (!isNaN(startSec) && !isNaN(endSec)) ? Math.round((endSec - startSec) * 10) / 10 : 0;\nvar clipValid = false, validationError = '';\nif (!pd.hasTranscript && !pd.clipSelectorFallback) { validationError = 'no transcript available'; }\nelse if (isNaN(startSec) || isNaN(endSec)) { validationError = 'timing NaN'; }\nelse if (startSec < 0) { validationError = 'start negative'; }\nelse if (endSec <= startSec) { validationError = 'end <= start'; }\nelse if (clipLen > 25) { validationError = 'clip > 25s'; }\nelse if (!usedFallback && !caption) { validationError = 'caption empty'; }\nelse if (!usedFallback && brandViolation) { validationError = 'BRAND: ' + brandViolation; }\nelse { clipValid = true; }\nvar slim = {\n  videoId: pd.videoId, brand: pd.brand, airtableRecordId: pd.airtableRecordId,\n  youtubeUrl: pd.youtubeUrl, videoStorageUrl: pd.videoStorageUrl, videoStored: pd.videoStored,\n  apifyTitle: pd.apifyTitle, thumbnailUrl: pd.thumbnailUrl, hasTranscript: pd.hasTranscript,\n  ctxCta: pd.ctxCta, ctxTags: pd.ctxTags, ctxCtaUrl: pd.ctxCtaUrl,\n  clipStart: startSec, clipEnd: endSec, clipLength: clipLen, clipHook: hook,\n  caption: caption, firstComment: firstComment, thumbTitle: thumbTitle,\n  thumbLine1: thumbLine1, thumbLine2: thumbLine2,\n  headline_fingerprint: headlineFingerprint,\n  clipValid: clipValid, validationError: validationError, brandViolation: brandViolation || '',\n  prompt_type: pd.genPromptType || promptType,\n  hook_style: pd.genHookStyle || hookStyle,\n  clip_emotion: pd.clipEmotion || '',\n  clip_confidence: pd.clipConfidence || 0,\n  generation_prompt: generationPrompt,\n  feed_type: pd.genFeedType || '',\n  feed_name: pd.genFeedName || pd.feedName || '',\n  rss_feed_url: pd.rssFeedUrl || '',\n  used_fallback_feed_mapping: pd.genUsedFallbackFeedMapping || false,\n  company_name: pd.companyName || pd.brand || 'finallysettled',\n  prompt_version: 'v5.1',\n  workflow_version: 'clip-factory-v5.1',\n  clip_reason: pd.clipReason || '',\n  used_fallback_clip: pd.clipSelectorFallback || false,\n  used_fallback_packaging: usedFallback,\n  headline_similar: isSimilar,\n  headline_similar_to: similarTo\n};\nreturn [{ json: slim }];"
+      }
+    },
+    {
+      "id": "89deaf0d-e611-49df-bce1-9b1666c8fcdb",
+      "name": "Publer Upload",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2500,
+        100
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://app.publer.com/api/v1/media/from-url",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer REDACTED"
+            },
+            {
+              "name": "Publer-Workspace-Id",
+              "value": "6996bb9c274064adca2a0cbe"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        },
+        "jsonBody": "={{ JSON.stringify({ media: [{ url: $json.videoStorageUrl || '', name: ($json.brand || 'clip') + '_' + ($json.videoId || 'x') + '.mp4' }] }) }}"
+      }
+    },
+    {
+      "id": "533bcc6e-42c0-45b8-ac27-b1cf481d6ac7",
+      "name": "Wait Processing",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2700,
+        100
+      ],
+      "parameters": {
+        "amount": 25,
+        "unit": "seconds",
+        "resume": "timeInterval"
+      }
+    },
+    {
+      "id": "0cd1eb79-7b76-478c-a8eb-30f7b5c8a6f8",
+      "name": "Publer Poll",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2900,
+        100
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ 'https://app.publer.com/api/v1/job_status/' + ($json.job_id || 'skip') }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer REDACTED"
+            },
+            {
+              "name": "Publer-Workspace-Id",
+              "value": "6996bb9c274064adca2a0cbe"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "713297f8-505b-4fb2-a354-483c7c940dd6",
+      "name": "Upload to Publer Media",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3100,
+        100
+      ],
+      "parameters": {
+        "jsCode": "// Upload to Publer Media \u2014 robust upload + poll loop (v2 fix)\n// Fixed: removed JSON.stringify double-encoding, added error capture\n\nvar captionData = $('Merge Thumbnail').first().json;\nvar uploadResp = $('Publer Upload').first().json;\nvar initialPoll = $input.first().json;\n\nvar apiKey = '076da1860b4e9f0292d5d2e7d5ef23ec22843d324bd80071';\nvar workspaceId = '6996bb9c274064adca2a0cbe';\nvar headers = { 'Authorization': 'Bearer-API ' + apiKey, 'Publer-Workspace-Id': workspaceId, 'Content-Type': 'application/json' };\n\nvar videoUrl = captionData.videoStorageUrl || captionData.renderedClipUrl || '';\nvar brand = captionData.brand || 'clip';\nvar videoId = captionData.videoId || 'x';\n\nvar jobId = uploadResp.job_id || '';\nvar mediaId = '';\nvar thumbnails = [];\nvar uploadErrors = 0;\nvar pollIterations = 0;\nvar finalStatus = '';\nvar lastUploadError = '';\nvar lastUploadResponse = '';\n\n// --- Phase 1: Ensure we have a valid job_id ---\nvar uploadRetries = 0;\nvar maxUploadRetries = 6;\n\nwhile (!jobId && uploadRetries < maxUploadRetries) {\n  if (uploadRetries > 0 || (uploadResp.errors && uploadResp.errors.length > 0)) {\n    await new Promise(function(r){ setTimeout(r, 15000); });\n    try {\n      var uploadResult = await this.helpers.httpRequest({\n        method: 'POST',\n        url: 'https://app.publer.com/api/v1/media/from-url',\n        headers: headers,\n        body: { media: [{ url: videoUrl, name: brand + '_' + videoId + '.mp4' }] },\n        timeout: 30000,\n        json: true\n      });\n      lastUploadResponse = JSON.stringify(uploadResult || {});\n      if (uploadResult && uploadResult.job_id) {\n        jobId = uploadResult.job_id;\n      } else if (uploadResult && uploadResult.errors) {\n        lastUploadError = uploadResult.errors.join('; ');\n      }\n    } catch(e) {\n      uploadErrors++;\n      lastUploadError = e.message || String(e);\n    }\n  }\n  if (!jobId) uploadRetries++;\n}\n\n// --- Phase 2: If we already got a complete initial poll, check it ---\nif (jobId && initialPoll && initialPoll.status === 'complete' && initialPoll.payload && initialPoll.payload[0]) {\n  mediaId = initialPoll.payload[0].id || '';\n  thumbnails = initialPoll.payload[0].thumbnails || [];\n  finalStatus = 'complete';\n}\n\n// --- Phase 3: Poll loop until media ID found ---\nvar maxPollIterations = 12;\nvar pollInterval = 10000;\nvar pollErrors = 0;\nvar lastPollError = '';\n\nwhile (!mediaId && jobId && finalStatus !== 'error' && pollIterations < maxPollIterations) {\n  await new Promise(function(r){ setTimeout(r, pollInterval); });\n  try {\n    var resp = await this.helpers.httpRequest({\n      method: 'GET',\n      url: 'https://app.publer.com/api/v1/job_status/' + jobId,\n      headers: { 'Authorization': 'Bearer-API ' + apiKey, 'Publer-Workspace-Id': workspaceId },\n      timeout: 15000,\n      json: true\n    });\n    if (resp && resp.status) { finalStatus = resp.status; }\n    if (resp && resp.status === 'complete' && resp.payload && resp.payload[0]) {\n      mediaId = resp.payload[0].id || '';\n      thumbnails = resp.payload[0].thumbnails || [];\n    }\n  } catch(e) {\n    pollErrors++;\n    lastPollError = e.message || String(e);\n  }\n  pollIterations++;\n}\n\nreturn [{ json: Object.assign({}, captionData, {\n  publerMediaId: mediaId,\n  publerThumbnails: thumbnails,\n  publerJobId: jobId,\n  publerUploadRetries: uploadRetries,\n  publerUploadErrors: uploadErrors,\n  publerPollIterations: pollIterations,\n  publerPollErrors: pollErrors,\n  publerPollStatus: finalStatus,\n  publerLastUploadError: lastUploadError,\n  publerLastUploadResponse: lastUploadResponse,\n  publerLastPollError: lastPollError,\n  publerVideoUrl: videoUrl\n}) }];"
+      }
+    },
+    {
+      "id": "1c186b65-5a04-4bdb-97d8-c74acd3d8f68",
+      "name": "Fetch Queued Video",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        300,
+        100
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://api.airtable.com/v0/apptgY5Qc6HvgZKB8/tbliG4q5QElW9rV5Q",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer REDACTED"
+            }
+          ]
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "filterByFormula",
+              "value": "AND({Brand}=\"finallysettled\",{Status}=\"queued\")"
+            },
+            {
+              "name": "sort[0][field]",
+              "value": "Added"
+            },
+            {
+              "name": "sort[0][direction]",
+              "value": "asc"
+            },
+            {
+              "name": "maxRecords",
+              "value": "1"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "da55e394-8a56-44c8-ac79-ddbe8f14ad66",
+      "name": "Extract Video Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        550,
+        100
+      ],
+      "parameters": {
+        "jsCode": "var records = $input.first().json.records || [];\nif (records.length === 0) throw new Error('No queued videos for finallysettled');\nvar record = records[0];\nvar url = record.fields['YouTube URL'] || '';\nvar videoId = '';\nvar match = url.match(/[?&]v=([a-zA-Z0-9_-]{11})/);\nif (match) videoId = match[1];\nif (!videoId) { match = url.match(/youtu\\.be\\/([a-zA-Z0-9_-]{11})/); if (match) videoId = match[1]; }\nif (!videoId) throw new Error('Could not extract video ID from: ' + url);\nreturn [{ json: {\n  videoId: videoId,\n  videoTitle: record.fields['Notes'] || '',\n  channelTitle: '',\n  thumbnailUrl: 'https://img.youtube.com/vi/' + videoId + '/maxresdefault.jpg',\n  duration: 0,\n  brand: record.fields['Brand'] || 'finallysettled',\n  airtableRecordId: record.id,\n  youtubeUrl: url,\n  feedName: record.fields['Feed Name'] || '',\n  rssFeedUrl: record.fields['RSS Feed URL'] || ''\n}}];"
+      }
+    },
+    {
+      "id": "4f140930-e4b3-4aff-9c73-7f6b135b5e40",
+      "name": "Mark Processing",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        800,
+        100
+      ],
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ 'https://api.airtable.com/v0/apptgY5Qc6HvgZKB8/tbliG4q5QElW9rV5Q/' + $json.airtableRecordId }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer REDACTED"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"fields\":{\"Status\":\"processing\"}}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "a0606b88-b4e3-43b1-a74f-b18139dc29be",
+      "name": "Restore Video Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1050,
+        100
+      ],
+      "parameters": {
+        "jsCode": "return [{ json: $('Extract Video Data').first().json }];"
+      }
+    },
+    {
+      "id": "1ec23b61-9e81-43d4-abab-8c570cfb2a8e",
+      "name": "Mark Used",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3500,
+        100
+      ],
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ 'https://api.airtable.com/v0/apptgY5Qc6HvgZKB8/tbliG4q5QElW9rV5Q/' + $('Upload to Publer Media').first().json.airtableRecordId }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer REDACTED"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"fields\":{\"Status\":\"used\"}}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "c2d4d6cf-12bc-4089-b103-b7b9c6d2d7a2",
+      "name": "Merge Thumbnail",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2550,
+        300
+      ],
+      "parameters": {
+        "jsCode": "let _clipData = $('Parse LLM Caption').first().json;\nconst videoId = _clipData.videoId;\nconst brand = _clipData.brand;\nconst airtableRecordId = _clipData.airtableRecordId;\nconst youtubeUrl = _clipData.youtubeUrl;\nconst apifyTitle = _clipData.apifyTitle;\nconst thumbnailUrl = _clipData.thumbnailUrl;\nconst caption = _clipData.caption;\nconst firstComment = _clipData.firstComment;\nconst thumbTitle = _clipData.thumbTitle;\nconst clipHook = _clipData.clipHook;\nconst clipStart = _clipData.clipStart;\nconst clipEnd = _clipData.clipEnd;\nconst clipLength = _clipData.clipLength;\nconst ctxCta = _clipData.ctxCta;\nconst ctxTags = _clipData.ctxTags;\nconst originalVideoUrl = _clipData.videoStorageUrl || '';\nconst prompt_type = _clipData.prompt_type || '';\nconst hook_style = _clipData.hook_style || '';\nconst clip_emotion = _clipData.clip_emotion || '';\nconst clip_confidence = _clipData.clip_confidence || 0;\nconst generation_prompt = _clipData.generation_prompt || '';\nconst feed_type = _clipData.feed_type || '';\nconst feed_name = _clipData.feed_name || '';\nconst rss_feed_url = _clipData.rss_feed_url || '';\nconst used_fallback_feed_mapping = _clipData.used_fallback_feed_mapping || false;\nconst company_name = _clipData.company_name || '';\nconst prompt_version = _clipData.prompt_version || '';\nconst workflow_version = _clipData.workflow_version || '';\nconst clip_reason = _clipData.clip_reason || '';\nconst used_fallback_clip = _clipData.used_fallback_clip || false;\nconst used_fallback_packaging = _clipData.used_fallback_packaging || false;\nconst headline_fingerprint = _clipData.headline_fingerprint || '';\nconst thumbLine1 = _clipData.thumbLine1 || '';\nconst thumbLine2 = _clipData.thumbLine2 || '';\nconst headline_similar = _clipData.headline_similar || false;\nconst headline_similar_to = _clipData.headline_similar_to || '';\n_clipData = null;\nlet _pollResult = $input.first().json;\nlet renderedUrl = '';\nlet renderStatus = '';\nlet renderId = '';\ntry {\n  if (_pollResult && _pollResult.response) {\n    renderStatus = _pollResult.response.status || '';\n    renderedUrl = _pollResult.response.url || '';\n    renderId = _pollResult.response.id || '';\n  }\n} catch(e) {}\ntry {\n  if (_pollResult && typeof _pollResult === 'object') {\n    delete _pollResult.timestampedTranscript;\n    delete _pollResult.geminiRequestBody;\n    delete _pollResult.fullTranscript;\n    delete _pollResult.rawApifyResponse;\n  }\n} catch(e) {}\n_pollResult = null;\nif (!renderId) {\n  try {\n    let _rd = $('Shotstack Render').first().json;\n    renderId = (_rd && _rd.response && _rd.response.id) || '';\n    _rd = null;\n  } catch(e) {}\n}\nconst maxIterations = 10;\nconst pollInterval = 30000;\nconst apiKey = 'rLDmE97NESvgKwQu3t5mSdsAYdz6bsd4FtcbNKVO';\nlet iterations = 1;\nlet lastStatus = null;\nlet pollErrors = 0;\nwhile (renderId && renderStatus !== 'done' && renderStatus !== 'failed' && iterations < maxIterations) {\n  await new Promise(function(r){ setTimeout(r, pollInterval); });\n  lastStatus = null;\n  try {\n    lastStatus = await this.helpers.httpRequest({\n      method: 'GET',\n      url: 'https://api.shotstack.io/edit/v1/render/' + renderId,\n      headers: { 'x-api-key': apiKey },\n      timeout: 15000,\n      json: true\n    });\n    if (lastStatus && lastStatus.response) {\n      renderStatus = lastStatus.response.status || renderStatus;\n      renderedUrl = lastStatus.response.url || renderedUrl;\n    }\n  } catch (e) {\n    pollErrors++;\n  }\n  lastStatus = null;\n  iterations++;\n}\nconst renderOk = (renderStatus === 'done' && !!renderedUrl);\nconst renderFailed = (renderStatus === 'failed');\nconst renderTimedOut = (!renderOk && !renderFailed && iterations >= maxIterations);\nreturn [{ json: {\n  videoId, brand, airtableRecordId, youtubeUrl, apifyTitle, thumbnailUrl,\n  caption, firstComment, thumbTitle, clipHook, clipStart, clipEnd, clipLength,\n  ctxCta, ctxTags, originalVideoUrl,\n  videoStorageUrl: renderedUrl, renderedClipUrl: renderedUrl,\n  renderStatus, renderId, pollIterations: iterations, pollErrors,\n  renderOk, renderFailed, renderTimedOut,\n  used_fallback_thumbnail: false,\n  thumbnail_status: renderOk ? 'success' : (renderFailed ? 'failed' : 'skipped'),\n  prompt_type, hook_style, clip_emotion, clip_confidence, generation_prompt,\n  feed_type, feed_name, rss_feed_url, used_fallback_feed_mapping,\n  company_name, prompt_version, workflow_version, clip_reason,\n  used_fallback_clip, used_fallback_packaging,\n  headline_fingerprint, thumbLine1, thumbLine2, headline_similar, headline_similar_to\n}}];"
+      }
+    },
+    {
+      "id": "a997c9e9-40f2-440d-ab54-c060e746415f",
+      "name": "Shotstack Render",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2350,
+        300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.shotstack.io/edit/v1/render",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "REDACTED"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ (() => {\n  const videoUrl = $json.videoStorageUrl;\n  const trimStart = $json.clipStart;\n  const clipLen = $json.clipLength;\n  const rawTitle = String($json.thumbTitle || 'WATCH THIS');\n  const brand = String($json.brand || 'finallysettled').toLowerCase();\n  const brandConfig = {\n    finallysettled: { color: '#00E676', label: 'FINALLY SETTLED' },\n    rawfunds: { color: '#FFD600', label: 'RAWFUNDS' },\n    proxitap: { color: '#FF6D00', label: 'PROXITAP' }\n  };\n  const cfg = brandConfig[brand] || brandConfig.finallysettled;\n  const q = String.fromCharCode(34);\n  const parts = rawTitle.split('\\n');\n  const line1Text = (parts[0] || 'WATCH THIS').replace(/[<>&]/g, '').toUpperCase().trim();\n  const line2Text = (parts[1] || '').replace(/[<>&]/g, '').toUpperCase().trim();\n  const w1 = line1Text.split(/\\s+/).length;\n  const w2 = line2Text ? line2Text.split(/\\s+/).length : 0;\n  const line1Size = w1 <= 2 ? 88 : w1 <= 3 ? 76 : w1 <= 4 ? 66 : 56;\n  const line2Size = w2 <= 3 ? 54 : w2 <= 5 ? 46 : w2 <= 7 ? 40 : 34;\n  const fontImport = '@import url(https://fonts.googleapis.com/css2?family=Anton&display=swap);';\n  const line1Style = 'font-family:Anton,Impact,sans-serif;font-size:' + line1Size + 'px;text-align:center;line-height:1.1;text-transform:uppercase;letter-spacing:2px;font-weight:400;text-shadow:4px 4px 16px rgba(0,0,0,1),0 0 50px rgba(0,0,0,0.8);padding:10px 20px;word-wrap:break-word;overflow:hidden';\n  const line2Style = 'font-family:Anton,Impact,sans-serif;font-size:' + line2Size + 'px;text-align:center;line-height:1.15;text-transform:uppercase;letter-spacing:1px;font-weight:400;text-shadow:3px 3px 12px rgba(0,0,0,1),0 0 40px rgba(0,0,0,0.8);padding:10px 20px;word-wrap:break-word;overflow:hidden;color:#FFFFFF';\n  const words1 = line1Text.split(' ');\n  const firstWord = words1[0] || '';\n  const restWords = words1.slice(1).join(' ');\n  var line1Html;\n  if (restWords) {\n    line1Html = '<style>' + fontImport + '</style><div style=' + q + line1Style + q + '><span style=' + q + 'color:' + cfg.color + q + '>' + firstWord + '</span> <span style=' + q + 'color:#FFFFFF' + q + '>' + restWords + '</span></div>';\n  } else {\n    line1Html = '<style>' + fontImport + '</style><div style=' + q + line1Style + ';color:' + cfg.color + q + '>' + firstWord + '</div>';\n  }\n  var line2Html = '<style>' + fontImport + '</style><div style=' + q + line2Style + q + '>' + line2Text + '</div>';\n  const labelStyle = 'font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#FFFFFF;font-weight:800;letter-spacing:4px;text-shadow:2px 2px 10px rgba(0,0,0,1)';\n  const labelHtml = '<div style=' + q + labelStyle + q + '>' + cfg.label + '</div>';\n  var tracks = [\n    { clips: [{ asset: { type: 'html', html: labelHtml, width: 300, height: 40 }, start: 0, length: clipLen, position: 'bottomLeft', offset: { x: 0.03, y: 0.02 } }] },\n    { clips: [{ asset: { type: 'html', html: line1Html, width: 1000, height: 220 }, start: 0, length: clipLen, position: 'top', offset: { x: 0, y: 0.02 } }] }\n  ];\n  if (line2Text) {\n    tracks.push({ clips: [{ asset: { type: 'html', html: line2Html, width: 1000, height: 220 }, start: 0, length: clipLen, position: 'bottom', offset: { x: 0, y: 0.06 } }] });\n  }\n  tracks.push({ clips: [{ asset: { type: 'video', src: videoUrl, trim: trimStart }, start: 0, length: clipLen, fit: 'contain', position: 'center', offset: { x: 0, y: 0 } }] });\n  return JSON.stringify({\n    timeline: { background: '#000000', tracks: tracks },\n    output: { format: 'mp4', resolution: '1080', aspectRatio: '9:16', fps: 30 }\n  });\n})() }}",
+        "options": {
+          "timeout": 30000,
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "id": "80962b28-efdd-4dd0-808f-485d54523b07",
+      "name": "Wait for Render",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2500,
+        300
+      ],
+      "parameters": {
+        "amount": 20,
+        "unit": "seconds"
+      }
+    },
+    {
+      "id": "4edd2175-92f3-4bc3-a2af-d4332a0069b8",
+      "name": "Shotstack Poll",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2650,
+        300
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.shotstack.io/edit/v1/render/{{ $json.response.id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "REDACTED"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "id": "fd14ee4d-464b-4ba3-8b05-6e58b06b46a1",
+      "name": "Check Video OK",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1650,
+        100
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "check-stored",
+              "leftValue": "={{ $json.videoStored }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "00530c11-1cac-412b-b138-9fec1b7c10ac",
+      "name": "Mark Failed",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1850,
+        300
+      ],
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.airtable.com/v0/apptgY5Qc6HvgZKB8/tbliG4q5QElW9rV5Q/{{ $json.airtableRecordId }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer REDACTED"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ fields: { Status: 'failed' } }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "8155caa8-baac-4956-a3b6-d615c9be9bab",
+      "name": "Fetch Transcript",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1780,
+        260
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.apify.com/v2/acts/pintostudio~youtube-transcript-scraper/run-sync-get-dataset-items?token=REDACTED",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ videoUrl: $json.youtubeUrl }) }}",
+        "options": {
+          "timeout": 120000,
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "4443bbb9-18cf-43dd-8c8e-a065c06a8087",
+      "name": "Merge Transcript",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1920,
+        260
+      ],
+      "parameters": {
+        "jsCode": "var videoData = $('Build Video Result').first().json;\nvar transcriptResp = $input.first().json;\nvar segments = [];\ntry {\n  if (Array.isArray(transcriptResp)) {\n    if (transcriptResp.length > 0 && transcriptResp[0] && Array.isArray(transcriptResp[0].data)) segments = transcriptResp[0].data;\n    else if (transcriptResp.length > 0 && transcriptResp[0] && transcriptResp[0].start !== undefined) segments = transcriptResp;\n  } else if (transcriptResp && Array.isArray(transcriptResp.data)) segments = transcriptResp.data;\n} catch(e) {}\nvar lines = [];\nfor (var i = 0; i < segments.length; i++) {\n  var s = segments[i] || {};\n  var st = parseFloat(s.start !== undefined ? s.start : (s.offset !== undefined ? s.offset : 0));\n  if (isNaN(st)) st = 0;\n  var tx = String(s.text || '').replace(/\\s+/g, ' ').trim();\n  if (tx) lines.push('[' + st.toFixed(1) + 's] ' + tx);\n}\nreturn [{ json: Object.assign({}, videoData, { timestampedTranscript: lines.join('\\n'), transcriptSegmentCount: lines.length, hasTranscript: lines.length > 0 }) }];"
+      }
+    },
+    {
+      "id": "4495f7c1-1a33-41f3-a04a-a9c413979144",
+      "name": "Validate Clip",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        2250,
+        100
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "validate-clip",
+              "leftValue": "={{ $json.clipValid }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "8b3a89d1-1aec-40f5-9b5a-6b276de649bf",
+      "name": "Check Clip Rendered",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        2700,
+        300
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "check-render",
+              "leftValue": "={{ $json.renderOk }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "clip-selector-prompt-1",
+      "name": "Build Clip Selector Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1850,
+        100
+      ],
+      "parameters": {
+        "jsCode": "var data = $input.first().json;\nvar brand = data.brand || 'finallysettled';\nvar videoTitle = data.apifyTitle || data.videoTitle || '';\nvar transcript = data.timestampedTranscript || '';\nvar brands = {\n  rawfunds: { name: 'RawFunds', niche: 'passive income, side hustles, financial freedom', forbidden: ['ghostjobindex.com','ghostjobindex','ghost jobs','ghost job','finallysettled.com','proxitap.com','housing crisis','mortgage rates','corporate landlords','flight deals','airport tips','aviation'], preferTopics: ['money','income','wealth','investing','side hustle','financial freedom','passive income'] },\n  finallysettled: { name: 'Finally Settled', niche: 'housing crisis, mortgage rates, private equity real estate, corporate landlords, homeownership, affordability', forbidden: ['ghostjobindex.com','ghostjobindex','ghost jobs','ghost job','rawfunds.com','proxitap.com','layoffs','layoff','hiring freeze','job market','passive income','side hustle','flight deals','airport tips','aviation'], preferTopics: ['money','housing','frustration','ownership','affordability','rent','mortgage','home','buying','landlord','credit','bank'] },\n  proxitap: { name: 'ProxiTap', niche: 'travel hacks, airport tips, flight deals, travel technology', forbidden: ['ghostjobindex.com','ghostjobindex','ghost jobs','ghost job','rawfunds.com','finallysettled.com','layoffs','layoff','hiring freeze','passive income','side hustle','housing crisis','mortgage rates','corporate landlords'], preferTopics: ['travel','flight','airport','booking','hotel','deals','miles','points','savings'] }\n};\nvar ctx = brands[brand] || brands.finallysettled;\nvar truncated = transcript.length > 8000 ? transcript.substring(0, 8000) + ' [TRUNCATED]' : transcript;\nvar forbiddenLine = '';\nif (ctx.forbidden && ctx.forbidden.length) { forbiddenLine = 'SKIP any segment that mentions these forbidden terms: ' + ctx.forbidden.join(', ') + '.'; }\nvar lines = [];\nlines.push('You are a clip selection specialist for ' + ctx.name + ', a ' + ctx.niche + ' brand.');\nlines.push('');\nlines.push('YOUR ONLY JOB: Pick the single best 25-second clip from this transcript.');\nlines.push('DO NOT write captions, hooks, or comments. ONLY select the clip.');\nlines.push('');\nlines.push('SOURCE VIDEO TITLE: ' + JSON.stringify(videoTitle));\nlines.push('');\nlines.push('TIMESTAMPED TRANSCRIPT (numbers in brackets = start seconds):');\nlines.push(truncated);\nlines.push('');\nlines.push('CLIP SELECTION RULES:');\nlines.push('- Duration MUST be > 0 and <= 25 seconds.');\nlines.push('- start_seconds must match a bracket timestamp.');\nlines.push('- end_seconds must land on a clean sentence end.');\nlines.push('- Clip MUST be understandable without prior context.');\nlines.push('- PREFER: strong emotional/financial statements, topics about ' + ctx.preferTopics.join(', ') + ', surprising stats, daily pain points, contrarian takes.');\nlines.push('- First 3 seconds must hook attention.');\nif (forbiddenLine) { lines.push('- ' + forbiddenLine); }\nlines.push('');\nlines.push('RESPOND ONLY WITH RAW JSON:');\nlines.push('{\"start_seconds\":<number>,\"end_seconds\":<number>,\"clip_reason\":\"<1-2 sentences>\",\"clip_emotion\":\"<pain|curiosity|aspiration|authority|controversy>\",\"clip_confidence\":<0.0-1.0>,\"transcript_excerpt_used\":\"<exact text>\"}');\nvar prompt = lines.join('\\n');\nvar reqBody = JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.4, maxOutputTokens: 1000, responseMimeType: 'application/json' } });\nreturn [{ json: Object.assign({}, data, { clipSelectorRequestBody: reqBody, stageA: true }) }];"
+      }
+    },
+    {
+      "id": "clip-selector-api-1",
+      "name": "Clip Selector API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2050,
+        100
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=REDACTED",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.clipSelectorRequestBody }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 4,
+      "waitBetweenTries": 8000
+    },
+    {
+      "id": "parse-clip-1",
+      "name": "Parse Clip Selection",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2250,
+        100
+      ],
+      "parameters": {
+        "jsCode": "var pd = $('Build Clip Selector Prompt').first().json;\nvar gr = $input.first().json;\nvar startSec = NaN, endSec = NaN;\nvar clipReason = '', clipEmotion = '', clipConfidence = 0, excerptUsed = '';\nvar selectorOk = false, selectorError = '';\ntry {\n  var txt = '';\n  if (gr && gr.candidates && gr.candidates[0] && gr.candidates[0].content && gr.candidates[0].content.parts && gr.candidates[0].content.parts[0]) {\n    txt = gr.candidates[0].content.parts[0].text || '';\n  }\n  txt = String(txt).replace(/^```json\\s*/i, '').replace(/^```\\s*/i, '').replace(/```$/i, '').trim();\n  var match = txt.match(/\\{[\\s\\S]*\\}/);\n  if (match) {\n    var p = JSON.parse(match[0]);\n    startSec = Number(p.start_seconds);\n    endSec = Number(p.end_seconds);\n    clipReason = String(p.clip_reason || '');\n    clipEmotion = String(p.clip_emotion || '').toLowerCase();\n    clipConfidence = Number(p.clip_confidence) || 0;\n    excerptUsed = String(p.transcript_excerpt_used || '');\n    var validEmotions = ['pain','curiosity','aspiration','authority','controversy'];\n    if (validEmotions.indexOf(clipEmotion) === -1) clipEmotion = 'pain';\n    if (clipConfidence < 0) clipConfidence = 0;\n    if (clipConfidence > 1) clipConfidence = 1;\n    var HARD_CAP = 25;\n    if (!isNaN(startSec) && !isNaN(endSec) && endSec > startSec && startSec >= 0) {\n      if (endSec - startSec > HARD_CAP) endSec = Math.round((startSec + HARD_CAP) * 10) / 10;\n      selectorOk = true;\n    } else { selectorError = 'Invalid timing: start=' + startSec + ' end=' + endSec; }\n  } else { selectorError = 'No JSON in clip selector response'; }\n} catch (e) { selectorError = 'Clip selector parse error: ' + (e && e.message); }\nreturn [{ json: Object.assign({}, pd, { clipStart: startSec, clipEnd: endSec, clipReason: clipReason, clipEmotion: clipEmotion, clipConfidence: clipConfidence, transcriptExcerptUsed: excerptUsed, clipSelectorOk: selectorOk, clipSelectorError: selectorError }) }];"
+      }
+    },
+    {
+      "id": "check-clip-1",
+      "name": "Check Clip Selection",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        2450,
+        100
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "check-clip-sel",
+              "leftValue": "={{ $json.clipSelectorOk }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "clip-fallback-1",
+      "name": "Clip Fallback",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2650,
+        300
+      ],
+      "parameters": {
+        "jsCode": "var data = $input.first().json;\nvar transcript = data.timestampedTranscript || '';\nvar fallbackExcerpt = transcript.length > 500 ? transcript.substring(0, 500) : transcript;\nreturn [{ json: Object.assign({}, data, { clipStart: 0, clipEnd: 25, clipReason: 'FALLBACK: Clip selector failed (' + (data.clipSelectorError || 'unknown') + '). Using first 25s.', clipEmotion: 'pain', clipConfidence: 0, transcriptExcerptUsed: fallbackExcerpt, clipSelectorOk: false, clipSelectorFallback: true }) }];"
+      }
+    },
+    {
+      "id": "render-fallback-1",
+      "name": "Render Fallback",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2850,
+        500
+      ],
+      "parameters": {
+        "jsCode": "var data = $input.first().json;\ndata.videoStorageUrl = data.originalVideoUrl || data.videoStorageUrl || '';\ndata.hctiThumbnailUrl = '';\ndata.used_fallback_thumbnail = true;\ndata.thumbnail_status = data.renderFailed ? 'failed' : (data.renderTimedOut ? 'skipped' : 'failed');\nreturn [{ json: data }];"
+      }
+    },
+    {
+      "id": "save-metadata-1",
+      "name": "Save Metadata",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3700,
+        100
+      ],
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ 'https://api.airtable.com/v0/apptgY5Qc6HvgZKB8/tbliG4q5QElW9rV5Q/' + $('Upload to Publer Media').first().json.airtableRecordId }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer REDACTED"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ (() => {\n  const d = $('Upload to Publer Media').first().json;\n  const fields = {};\n  if (d.prompt_type) fields['Prompt Type'] = String(d.prompt_type);\n  if (d.hook_style) fields['Hook Style'] = String(d.hook_style);\n  if (d.clip_emotion) fields['Clip Emotion'] = String(d.clip_emotion);\n  if (typeof d.clip_confidence === 'number') fields['Clip Confidence'] = d.clip_confidence;\n  if (d.clip_reason) fields['Clip Reason'] = String(d.clip_reason).substring(0, 1000);\n  if (d.feed_type) fields['Feed Type'] = String(d.feed_type);\n  if (d.feed_name) fields['Feed Name'] = String(d.feed_name);\n  if (d.rss_feed_url) fields['RSS Feed URL'] = String(d.rss_feed_url);\n  if (d.company_name) fields['Company Name'] = String(d.company_name);\n  if (d.prompt_version) fields['Prompt Version'] = String(d.prompt_version);\n  if (d.workflow_version) fields['Workflow Version'] = String(d.workflow_version);\n  fields['Used Fallback Clip'] = d.used_fallback_clip === true;\n  fields['Used Fallback Packaging'] = d.used_fallback_packaging === true;\n  fields['Used Fallback Thumbnail'] = d.used_fallback_thumbnail === true;\n  fields['Used Fallback Feed Mapping'] = d.used_fallback_feed_mapping === true;\n  if (d.thumbnail_status) fields['Thumbnail Status'] = String(d.thumbnail_status);\n  if (d.caption) fields['Caption'] = String(d.caption).substring(0, 5000);\n  if (d.firstComment) fields['First Comment'] = String(d.firstComment).substring(0, 2000);\n  if (d.thumbTitle) fields['Thumb Title'] = String(d.thumbTitle).replace(/\\n/g, ' / ').substring(0, 500);\n  if (typeof d.clipStart === 'number' && !isNaN(d.clipStart)) fields['Clip Start'] = d.clipStart;\n  if (typeof d.clipEnd === 'number' && !isNaN(d.clipEnd)) fields['Clip End'] = d.clipEnd;\n  if (d.headline_fingerprint) fields['Headline Fingerprint'] = String(d.headline_fingerprint).substring(0, 500);\n  return JSON.stringify({ fields: fields });\n})() }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "42277043-d6cf-44fc-a40b-e13213a5c372",
+      "name": "Retry Next Video",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2050,
+        400
+      ],
+      "parameters": {
+        "jsCode": "// After a failed download, check if we should try the next queued video.\n// Max 3 retries per execution to avoid infinite loops.\nconst staticData = $getWorkflowStaticData('global');\nconst execId = $execution.id;\nconst key = 'retryCount_' + execId;\nconst count = (staticData[key] || 0) + 1;\nstaticData[key] = count;\n\n// Clean up stale keys from previous executions\nfor (const k of Object.keys(staticData)) {\n  if (k.startsWith('retryCount_') && k !== key) {\n    delete staticData[k];\n  }\n}\n\nif (count >= 3) {\n  // Tried 3 videos already, stop this execution\n  return [];\n}\n\n// Pass through to fetch the next queued video\nreturn [{ json: { retry: count, previousVideoFailed: true } }];\n"
+      }
+    },
+    {
+      "id": "67c67c33-86d7-4f34-ad12-9f4a0203363d",
+      "name": "Apify Download & Store",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2180,
+        460
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.apify.com/v2/acts/api-ninja~youtube-video-downloader/runs?token=REDACTED",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ urls: [$json.youtubeUrl], format: '1080', ttl: '1d' }) }}",
+        "options": {
+          "timeout": 30000,
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "8753f116-4823-4985-9c3a-271fec3ec2ce",
+      "name": "Get Download Results",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2620,
+        460
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.apify.com/v2/datasets/{{ $('Check Apify Status').first().json.data.defaultDatasetId }}/items?token=REDACTED&clean=true",
+        "options": {
+          "timeout": 30000,
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "42df7b6a-587c-4354-bec6-7006222a6861",
+      "name": "Extract Run Info",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2300,
+        460
+      ],
+      "parameters": {
+        "jsCode": "const input = $input.first().json;\nlet runId = '';\nlet datasetId = '';\nlet status = '';\ntry {\n  if (input && input.data) {\n    runId = input.data.id || '';\n    datasetId = input.data.defaultDatasetId || '';\n    status = input.data.status || '';\n  }\n} catch(e) {}\nconst TERMINAL = ['SUCCEEDED','FAILED','ABORTED','TIMED-OUT','TIMED_OUT'];\nreturn [{ json: { runId, datasetId, status, isDone: TERMINAL.includes(status), succeeded: status === 'SUCCEEDED' } }];"
+      }
+    },
+    {
+      "id": "0f796a85-78e8-4b97-a63f-fd7e748cc564",
+      "name": "Wait for Apify",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2400,
+        560
+      ],
+      "parameters": {
+        "amount": 15,
+        "unit": "seconds"
+      }
+    },
+    {
+      "id": "93c92c68-9b83-4c20-92a1-a85f2930ffbb",
+      "name": "Check Apify Status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2520,
+        560
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.apify.com/v2/actor-runs/{{ $('Extract Run Info').first().json.runId }}?token=REDACTED",
+        "options": {
+          "timeout": 15000,
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "c6f834ff-cc10-4c8d-8252-aba0c1cbc4cc",
+      "name": "Is Apify Done?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        2640,
+        560
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "1",
+              "leftValue": "={{ $json.data.status }}",
+              "rightValue": "READY",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            },
+            {
+              "id": "2",
+              "leftValue": "={{ $json.data.status }}",
+              "rightValue": "RUNNING",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "a6e85ddc-e5a7-4e8c-bb3c-448a69220b80",
+      "name": "Wait Before Caption",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2750,
+        100
+      ],
+      "parameters": {
+        "amount": 10,
+        "unit": "seconds"
+      }
+    }
+  ],
+  "connections": {
+    "Build Packaging Prompt": {
+      "main": [
+        [
+          {
+            "node": "Gemini Caption API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini Caption API": {
+      "main": [
+        [
+          {
+            "node": "Parse LLM Caption",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Publer Upload": {
+      "main": [
+        [
+          {
+            "node": "Wait Processing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait Processing": {
+      "main": [
+        [
+          {
+            "node": "Publer Poll",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Publer Poll": {
+      "main": [
+        [
+          {
+            "node": "Upload to Publer Media",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload to Publer Media": {
+      "main": [
+        [
+          {
+            "node": "Create Publer Draft",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Every 48 Minutes": {
+      "main": [
+        [
+          {
+            "node": "Fetch Queued Video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Fetch Queued Video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Test Webhook": {
+      "main": [
+        [
+          {
+            "node": "Fetch Queued Video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Queued Video": {
+      "main": [
+        [
+          {
+            "node": "Extract Video Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Video Data": {
+      "main": [
+        [
+          {
+            "node": "Mark Processing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark Processing": {
+      "main": [
+        [
+          {
+            "node": "Restore Video Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Publer Draft": {
+      "main": [
+        [
+          {
+            "node": "Mark Used",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Shotstack Render": {
+      "main": [
+        [
+          {
+            "node": "Wait for Render",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait for Render": {
+      "main": [
+        [
+          {
+            "node": "Shotstack Poll",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Shotstack Poll": {
+      "main": [
+        [
+          {
+            "node": "Merge Thumbnail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Video Result": {
+      "main": [
+        [
+          {
+            "node": "Check Video OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Video OK": {
+      "main": [
+        [
+          {
+            "node": "Fetch Transcript",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mark Failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Transcript": {
+      "main": [
+        [
+          {
+            "node": "Merge Transcript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse LLM Caption": {
+      "main": [
+        [
+          {
+            "node": "Validate Clip",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Clip": {
+      "main": [
+        [
+          {
+            "node": "Shotstack Render",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mark Failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Thumbnail": {
+      "main": [
+        [
+          {
+            "node": "Check Clip Rendered",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Clip Rendered": {
+      "main": [
+        [
+          {
+            "node": "Publer Upload",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Render Fallback",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Clip Selector Prompt": {
+      "main": [
+        [
+          {
+            "node": "Clip Selector API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clip Selector API": {
+      "main": [
+        [
+          {
+            "node": "Parse Clip Selection",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Clip Selection": {
+      "main": [
+        [
+          {
+            "node": "Check Clip Selection",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Clip Selection": {
+      "main": [
+        [
+          {
+            "node": "Wait Before Caption",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Clip Fallback",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Transcript": {
+      "main": [
+        [
+          {
+            "node": "Build Clip Selector Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Render Fallback": {
+      "main": [
+        [
+          {
+            "node": "Publer Upload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark Used": {
+      "main": [
+        [
+          {
+            "node": "Save Metadata",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark Failed": {
+      "main": [
+        [
+          {
+            "node": "Retry Next Video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Retry Next Video": {
+      "main": [
+        [
+          {
+            "node": "Fetch Queued Video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Restore Video Data": {
+      "main": [
+        [
+          {
+            "node": "Apify Download & Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Download Results": {
+      "main": [
+        [
+          {
+            "node": "Build Video Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Apify Download & Store": {
+      "main": [
+        [
+          {
+            "node": "Extract Run Info",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Run Info": {
+      "main": [
+        [
+          {
+            "node": "Wait for Apify",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait for Apify": {
+      "main": [
+        [
+          {
+            "node": "Check Apify Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Apify Status": {
+      "main": [
+        [
+          {
+            "node": "Is Apify Done?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Apify Done?": {
+      "main": [
+        [
+          {
+            "node": "Get Download Results",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait for Apify",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait Before Caption": {
+      "main": [
+        [
+          {
+            "node": "Build Packaging Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clip Fallback": {
+      "main": [
+        [
+          {
+            "node": "Wait Before Caption",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/New_York",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": {
+    "node:Daily Schedule": {
+      "recurrenceRules": []
+    },
+    "node:Every 48 Minutes": {
+      "recurrenceRules": []
+    },
+    "global": {
+      "retryCount_119159": 3
+    }
+  },
+  "meta": null,
+  "pinData": null,
+  "versionId": "97d1d4f4-7416-4325-95fa-b6b0da89a1db",
+  "activeVersionId": "97d1d4f4-7416-4325-95fa-b6b0da89a1db",
+  "versionCounter": 1682,
+  "triggerCount": 2,
+  "shared": [
+    {
+      "updatedAt": "2026-04-04T18:08:21.035Z",
+      "createdAt": "2026-04-04T18:08:21.035Z",
+      "role": "workflow:owner",
+      "workflowId": "K63Ut64YfW8Ll6BF",
+      "projectId": "Q7ytaIj7oyQpddlr",
+      "project": {
+        "updatedAt": "2026-02-03T04:38:34.404Z",
+        "createdAt": "2026-02-03T04:34:14.320Z",
+        "id": "Q7ytaIj7oyQpddlr",
+        "name": "Raw Funds <info@rawfunds.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "d42639c1-6ec3-44cd-b664-d9c56171bec3",
+        "projectRelations": [
+          {
+            "updatedAt": "2026-02-03T04:34:14.320Z",
+            "createdAt": "2026-02-03T04:34:14.320Z",
+            "userId": "d42639c1-6ec3-44cd-b664-d9c56171bec3",
+            "projectId": "Q7ytaIj7oyQpddlr",
+            "user": {
+              "updatedAt": "2026-04-22T18:48:22.000Z",
+              "createdAt": "2026-02-03T04:34:13.932Z",
+              "id": "d42639c1-6ec3-44cd-b664-d9c56171bec3",
+              "email": "info@rawfunds.com",
+              "firstName": "Raw",
+              "lastName": "Funds",
+              "personalizationAnswers": {
+                "version": "v4",
+                "personalization_survey_submitted_at": "2026-02-03T04:38:47.373Z",
+                "personalization_survey_n8n_version": "2.6.3",
+                "companySize": "<20",
+                "companyType": "saas",
+                "role": "business-owner",
+                "reportedSource": "google"
+              },
+              "settings": {
+                "userActivated": true,
+                "easyAIWorkflowOnboarded": true,
+                "firstSuccessfulWorkflowId": "Lry8UR2aE1vKkmNN5VILU",
+                "userActivatedAt": 1771218033027,
+                "npsSurvey": {
+                  "waitingForResponse": true,
+                  "ignoredCount": 2,
+                  "lastShownAt": 1774248148055
+                }
+              },
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2026-04-22",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": {
+    "updatedAt": "2026-04-15T02:18:22.591Z",
+    "createdAt": "2026-04-15T02:18:22.591Z",
+    "versionId": "97d1d4f4-7416-4325-95fa-b6b0da89a1db",
+    "workflowId": "K63Ut64YfW8Ll6BF",
+    "nodes": [
+      {
+        "id": "schedule-1",
+        "name": "Every 48 Minutes",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          0,
+          0
+        ],
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "cronExpression",
+                "expression": "30 */3 * * *"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "manual-1",
+        "name": "Manual Trigger",
+        "type": "n8n-nodes-base.manualTrigger",
+        "typeVersion": 1,
+        "position": [
+          0,
+          200
+        ],
+        "parameters": {}
+      },
+      {
+        "id": "webhook-1",
+        "name": "Test Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          0,
+          400
+        ],
+        "webhookId": "finally-settled-test",
+        "parameters": {
+          "path": "finally-settled-test",
+          "httpMethod": "POST",
+          "responseMode": "lastNode"
+        }
+      },
+      {
+        "id": "build-result-1",
+        "name": "Build Video Result",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1500,
+          100
+        ],
+        "parameters": {
+          "jsCode": "// Build Video Result \u2014 Apify flow with native n8n polling\nconst pickData = $('Extract Video Data').first().json;\nconst statusData = $('Check Apify Status').first().json;\nconst resultsIn = $input.first().json;\n\nconst pollStatus = (statusData && statusData.data && statusData.data.status) || '';\nconst TERMINAL = ['SUCCEEDED','FAILED','ABORTED','TIMED-OUT','TIMED_OUT'];\nconst terminalReached = TERMINAL.includes(pollStatus);\nconst apifySucceeded = (pollStatus === 'SUCCEEDED');\n\nlet storageUrl = '';\nlet success = false;\nlet fileSize = 0;\nlet duration = 0;\nlet apifyTitle = '';\nlet errorReason = '';\n\nif (!terminalReached) {\n  errorReason = 'apify_run_timeout';\n} else if (!apifySucceeded) {\n  errorReason = 'apify_run_' + String(pollStatus || 'unknown').toLowerCase();\n} else {\n  const arr = Array.isArray(resultsIn)\n    ? resultsIn\n    : (resultsIn && Array.isArray(resultsIn.data) ? resultsIn.data : [resultsIn]);\n  const item = arr && arr[0];\n  if (item && typeof item === 'object') {\n    storageUrl = item.storageUrl || item.downloadUrl || '';\n    success = !!((item.status === 'completed' || item.success === true) && storageUrl);\n    fileSize = item.fileSizeBytes || item.fileSize || 0;\n    duration = item.duration || 0;\n    apifyTitle = item.title || '';\n    if (!success) errorReason = 'apify_no_storage_url';\n  } else {\n    errorReason = 'apify_empty_dataset';\n  }\n}\n\nreturn [{ json: {\n  ...pickData,\n  videoStorageUrl: success ? storageUrl : '',\n  videoStored: success,\n  videoFileSize: fileSize,\n  clipDuration: duration,\n  fullDuration: duration,\n  viralHook: '',\n  clipReason: '',\n  transcriptExcerpt: '',\n  apifyTitle: apifyTitle,\n  hasTranscript: false,\n  errorReason: errorReason\n}}];"
+        }
+      },
+      {
+        "id": "publer-post-1",
+        "name": "Create Publer Draft",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          2200,
+          100
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://app.publer.com/api/v1/posts/schedule",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "Bearer REDACTED"
+              },
+              {
+                "name": "Publer-Workspace-Id",
+                "value": "6996bb9c274064adca2a0cbe"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ (() => {\n  const d = $('Upload to Publer Media').first().json;\n  const mediaId = d.publerMediaId;\n  const thumbs = d.publerThumbnails || [];\n  const text = d.caption;\n  const firstComment = d.firstComment || '';\n  const fbId = '69d03eb8d8776303e3535e30';\n\n  const commentObj = firstComment ? [{ text: firstComment, delay: { duration: 0, unit: 'Minute' } }] : [];\n\n  if (mediaId) {\n    const thumbArr = thumbs.map(t => ({ id: t.id, small: t.small, real: t.real }));\n    const mediaObj = {\n      id: mediaId,\n      thumbnails: thumbArr,\n      default_thumbnail: 0\n    };\n    return JSON.stringify({\n      bulk: {\n        state: 'scheduled',\n        posts: [{\n          networks: {\n            facebook: { type: 'video', media: [mediaObj], text: text }\n          },\n          accounts: [\n            { id: fbId, comments: commentObj }\n          ]\n        }]\n      }\n    });\n  } else {\n    return JSON.stringify({ error: 'No media uploaded - pipeline should have stopped at Check Video OK' });\n  }\n})() }}",
+          "options": {}
+        },
+        "onError": "continueRegularOutput"
+      },
+      {
+        "id": "b93f582d-1485-4970-98b5-bb1449e769f1",
+        "name": "Build Packaging Prompt",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1900,
+          100
+        ],
+        "parameters": {
+          "jsCode": "var data = $input.first().json;\nvar brand = data.brand || 'finallysettled';\nvar brands = {\n  rawfunds: { name: 'RawFunds', niche: 'passive income, side hustles, financial freedom, investing, wealth building, entrepreneurship, money tips, recession-proof income', cta: 'rawfunds.com \\u2014 link in bio', ctaUrl: 'rawfunds.com', tags: '#passiveincome #sidehustle #financialfreedom #investing #wealthbuilding #moneytips #entrepreneur', tone: 'Bold, provocative, anti-establishment. Challenge Wall Street, banks, and the 9-to-5 grind.', forbidden: ['ghostjobindex.com','ghostjobindex','ghost jobs','ghost job','finallysettled.com','proxitap.com','housing crisis','mortgage rates','corporate landlords','flight deals','airport tips','aviation'], audience: 'people trapped in a 9-to-5 who want passive income and financial freedom', tieBackConcepts: ['financial freedom','passive income','escape the 9-to-5'] },\n  finallysettled: { name: 'Finally Settled', niche: 'housing crisis, credit score system rigged, private equity buying real estate, corporate landlords, mortgage rates crushing buyers, homeownership, wealth gap, housing affordability', cta: 'finallysettled.com \\u2014 link in bio', ctaUrl: 'finallysettled.com', tags: '#housingcrisis #homeownership #firsttimebuyer #realestate #mortgagerates #corporatelandlords #housingpolicy #wealthgap #affordablehousing', tone: 'Angry, justice-oriented, anti-establishment. Expose how the system is rigged against first-time buyers.', forbidden: ['ghostjobindex.com','ghostjobindex','ghost jobs','ghost job','rawfunds.com','proxitap.com','layoffs','layoff','hiring freeze','job market','passive income','side hustle','flight deals','airport tips','aviation'], audience: 'first-time homebuyers and renters crushed by corporate landlords and rigged credit systems', tieBackConcepts: ['homeownership','affordability','no bank needed'] },\n  proxitap: { name: 'ProxiTap', niche: 'travel hacks, airport tips, flight deals, travel technology, digital nomad, travel rewards, cheap flights', cta: 'proxitap.com \\u2014 travel smarter. link in bio', ctaUrl: 'proxitap.com', tags: '#traveltips #flightdeals #traveltech #airport #aviation #digitalnomad #travelhacks #cheapflights #airlinenews', tone: 'Smart, practical, insider knowledge. Help travelers save money and travel better.', forbidden: ['networking','executive','business','professional','entrepreneur','b2b','linkedin','corporate','leadership','boardroom','c-suite','sales team','meeting','ghostjobindex.com','ghostjobindex','ghost jobs','ghost job','rawfunds.com','finallysettled.com','layoffs','layoff','hiring freeze','passive income','side hustle','housing crisis','mortgage rates','corporate landlords'], audience: 'smart travelers, digital nomads, flight-deal hunters, points-and-miles hackers', tieBackConcepts: ['travel smarter','save on flights','hidden travel hacks'] }\n};\nvar ctx = brands[brand] || brands.finallysettled;\nvar excerpt = data.transcriptExcerptUsed || '';\nvar clipEmotion = data.clipEmotion || 'pain';\nvar FEED_MAP = {\n  'legacy':      { feedType: 'legacy',      hookPrimary: ['aspiration','bold_statement','relatable_pain'], hookSecondary: ['curiosity_gap'],   promptPool: ['aspiration','emotional_story'] },\n  'market':      { feedType: 'market',      hookPrimary: ['shocking_stat','contrarian','bold_statement'],  hookSecondary: ['question'],         promptPool: ['controversy','fear_loss'] },\n  'louisiana':   { feedType: 'local',       hookPrimary: ['aspiration','curiosity_gap','bold_statement'],  hookSecondary: ['relatable_pain'],   promptPool: ['local_story','aspiration'] },\n  'indiana':     { feedType: 'local',       hookPrimary: ['aspiration','curiosity_gap','bold_statement'],  hookSecondary: ['relatable_pain'],   promptPool: ['local_story','aspiration'] },\n  'georgia':     { feedType: 'local',       hookPrimary: ['aspiration','curiosity_gap','bold_statement'],  hookSecondary: ['relatable_pain'],   promptPool: ['local_story','aspiration'] },\n  'alabama':     { feedType: 'local',       hookPrimary: ['aspiration','curiosity_gap','bold_statement'],  hookSecondary: ['relatable_pain'],   promptPool: ['local_story','aspiration'] },\n  'payment':     { feedType: 'payment',     hookPrimary: ['shocking_stat','bold_statement','question'],    hookSecondary: ['curiosity_gap'],    promptPool: ['payment_hook'] },\n  'alternative': { feedType: 'alternative', hookPrimary: ['curiosity_gap','bold_statement','question'],    hookSecondary: ['contrarian'],       promptPool: ['curiosity','aspiration'] },\n  'credit':      { feedType: 'credit',      hookPrimary: ['question','bold_statement','contrarian'],       hookSecondary: ['curiosity_gap'],    promptPool: ['controversy','curiosity'] },\n  'pain':        { feedType: 'pain',        hookPrimary: ['relatable_pain','bold_statement','question'],   hookSecondary: ['curiosity_gap'],    promptPool: ['emotional_story','fear_loss'] }\n};\nfunction simpleHash(str) { var hash = 0; for (var i = 0; i < str.length; i++) { hash = ((hash << 5) - hash) + str.charCodeAt(i); hash = hash & hash; } return Math.abs(hash); }\nvar recordId = data.airtableRecordId || data.videoId || ('fallback_' + Date.now());\nvar seed = simpleHash(recordId);\nvar feedName = data.feedName || '';\nvar feedConfig = FEED_MAP[feedName] || null;\nvar usedFallbackFeedMapping = false;\nif (!feedConfig) {\n  feedConfig = FEED_MAP['pain'];\n  feedName = feedName || 'unknown';\n  usedFallbackFeedMapping = true;\n}\nvar feedType = feedConfig.feedType;\nvar fullHookPool = feedConfig.hookPrimary.concat(feedConfig.hookSecondary);\nvar hookStyle = fullHookPool[seed % fullHookPool.length];\nvar promptType = feedConfig.promptPool[seed % feedConfig.promptPool.length];\nvar hookInstructions = {\n  'bold_statement': 'First line: a bold, declarative statement. No questions. Pure conviction. Under 15 words.',\n  'curiosity_gap': 'First line: hint at a hidden truth but withhold the answer. Under 15 words.',\n  'relatable_pain': 'First line: name a specific frustration the audience lives with. Use you language. Under 15 words.',\n  'question': 'First line: a provocative rhetorical question. Under 15 words.',\n  'shocking_stat': 'First line: lead with a jarring number or statistic from the clip. Under 15 words.',\n  'contrarian': 'First line: attack a popular belief. Stop doing X or X is a lie framing. Under 15 words.',\n  'aspiration': 'First line: paint the desired outcome vividly. Under 15 words.'\n};\n\n// --- v5: Feed-type headline word guidance ---\nvar FEED_HEADLINE_WORDS = {\n  pain: 'struggle, stuck, trapped, crushed, rigged, broken',\n  credit: 'denied, banks, score, rejected, rigged, unfair',\n  alternative: 'hidden, secret, loophole, overlooked, underground',\n  payment: 'payment, cost, fee, price, overcharged, afford',\n  local: 'neighborhood, community, area, local, displaced, priced out',\n  market: 'crash, bubble, collapse, squeeze, crisis, surge',\n  legacy: 'dream, build, own, generational, wealth, freedom'\n};\nvar feedHeadlineWords = FEED_HEADLINE_WORDS[feedType] || FEED_HEADLINE_WORDS.pain;\n\n// --- v5: Fetch recent headlines from Airtable for dedup ---\nvar recentHeadlines = [];\ntry {\n  var atUrl = 'https://api.airtable.com/v0/apptgY5Qc6HvgZKB8/tbliG4q5QElW9rV5Q';\n  atUrl += '?maxRecords=30&sort%5B0%5D%5Bfield%5D=Created&sort%5B0%5D%5Bdirection%5D=desc';\n  atUrl += '&fields%5B%5D=Thumb%20Title&fields%5B%5D=Headline%20Fingerprint';\n  var atResp = await this.helpers.httpRequest({\n    method: 'GET',\n    url: atUrl,\n    headers: { 'Authorization': 'Bearer REDACTED' }\n  });\n  if (atResp && atResp.records) {\n    for (var r = 0; r < atResp.records.length; r++) {\n      var f = atResp.records[r].fields;\n      if (f && f['Thumb Title']) {\n        recentHeadlines.push(String(f['Thumb Title']));\n      }\n    }\n  }\n} catch (e) { /* non-blocking: if fetch fails, skip dedup guidance */ }\n\n// --- Build avoid section ---\nvar avoidSection = '';\nif (recentHeadlines.length > 0) {\n  avoidSection = 'AVOID THESE RECENT HEADLINES (do NOT repeat or closely paraphrase):\\n';\n  for (var a = 0; a < recentHeadlines.length; a++) {\n    avoidSection += '- ' + recentHeadlines[a] + '\\n';\n  }\n}\n\nvar forbiddenLine = '';\nif (ctx.forbidden && ctx.forbidden.length) { forbiddenLine = 'FORBIDDEN TERMS in ALL fields: ' + ctx.forbidden.join(', ') + '. If any appear, regenerate.'; }\nvar lines = [];\nlines.push('You are a social media packaging specialist for ' + ctx.name + '.');\nlines.push('Brand tone: ' + ctx.tone);\nlines.push('Audience: ' + ctx.audience);\nlines.push('');\nlines.push('A clip has already been selected. Your job is ONLY to write the packaging.');\nlines.push('DO NOT select a clip. DO NOT output start_seconds or end_seconds.');\nlines.push('');\nlines.push('CLIP TRANSCRIPT EXCERPT:');\nlines.push(excerpt || '[No excerpt available]');\nlines.push('');\nlines.push('CLIP EMOTION: ' + clipEmotion);\nlines.push('FEED TYPE: ' + feedType);\nlines.push('');\nlines.push('ASSIGNED HOOK STYLE [' + hookStyle + ']: ' + hookInstructions[hookStyle]);\nlines.push('YOU MUST USE THIS EXACT HOOK STYLE. Do not substitute a different style.');\nlines.push('');\nlines.push('ASSIGNED PROMPT TYPE: ' + promptType);\nlines.push('Frame the caption through this lens. Do not ignore this assignment.');\nlines.push('');\nlines.push('CAPTION FORMAT (STRICT):');\nlines.push('- Line 1: The hook (following hook style above). Short, punchy, under 15 words.');\nlines.push('- Lines 2-4: 2-4 short sentences. Simple language. Grade 6 reading level.');\nlines.push('- Every caption MUST tie back to one of: ' + ctx.tieBackConcepts.join(', '));\nlines.push('- MUST end with: \\ud83d\\udd17 ' + ctx.cta + '  ' + ctx.tags);\nlines.push('- Total caption: 50-100 words. NOT 150-250. SHORT.');\nlines.push('');\nlines.push('FIRST COMMENT RULES:');\nlines.push('- Maximum 2 sentences.');\nlines.push('- Must either extend the story OR include CTA.');\nlines.push('- Must include ONE of: a payment reference, no bank needed, or comment INFO.');\nlines.push('');\nlines.push('THUMBNAIL HEADLINE (2-LINE FORMAT, STRICT):');\nlines.push('- thumbLine1: 3-6 words, ALL CAPS. The HOOK. Grounded in the clip transcript. Pull a specific number, name, or shocking detail.');\nlines.push('- thumbLine2: 5-10 words, ALL CAPS. EXPANDS on line 1 with a specific detail from the transcript.');\nlines.push('- Feed type is \"' + feedType + '\" \\u2014 try to use words like: ' + feedHeadlineWords);\nlines.push('- BOTH lines must be UNIQUE to THIS specific clip. NEVER use generic titles.');\nlines.push('- Each video MUST have a DIFFERENT headline.');\nif (avoidSection) { lines.push(''); lines.push(avoidSection); }\nlines.push('');\nif (forbiddenLine) { lines.push(forbiddenLine); lines.push(''); }\nlines.push('BRAND RULES: Only CTA allowed: ' + ctx.ctaUrl + '. No other brand or URL.');\nlines.push('');\nlines.push('RESPOND ONLY WITH RAW JSON:');\nlines.push('{\"hook_style\":\"' + hookStyle + '\",\"prompt_type\":\"' + promptType + '\",\"generation_prompt\":\"<1 sentence>\",\"caption\":\"<full caption>\",\"firstComment\":\"<1-2 sentences>\",\"thumbLine1\":\"<3-6 words ALL CAPS>\",\"thumbLine2\":\"<5-10 words ALL CAPS>\",\"tags\":\"' + ctx.tags + '\"}');\nvar prompt = lines.join('\\n');\nvar reqBody = JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.85, maxOutputTokens: 1500, responseMimeType: 'application/json' } });\nreturn [{ json: Object.assign({}, data, { geminiRequestBody: reqBody, ctxCta: ctx.cta, ctxTags: ctx.tags, ctxCtaUrl: ctx.ctaUrl, ctxForbidden: ctx.forbidden, genHookStyle: hookStyle, genPromptType: promptType, genFeedType: feedType, genFeedName: feedName, genUsedFallbackFeedMapping: usedFallbackFeedMapping, promptVersion: 'v5', companyName: brand, recentHeadlines: recentHeadlines }) }];"
+        }
+      },
+      {
+        "id": "23688e1f-30b9-47ea-93fe-4552a0515ae5",
+        "name": "Gemini Caption API",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          2100,
+          100
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=REDACTED",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "options": {
+            "timeout": 60000
+          },
+          "jsonBody": "={{ $json.geminiRequestBody }}"
+        },
+        "retryOnFail": true,
+        "maxTries": 4,
+        "waitBetweenTries": 15000,
+        "onError": "continueRegularOutput"
+      },
+      {
+        "id": "8389ae51-f488-4099-99be-94e7e1c5082b",
+        "name": "Parse LLM Caption",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2300,
+          100
+        ],
+        "parameters": {
+          "jsCode": "var pd = $('Build Packaging Prompt').first().json;\nvar gr = $input.first().json;\nvar caption = '', firstComment = '', thumbTitle = '', hook = '';\nvar thumbLine1 = '', thumbLine2 = '';\nvar headlineFingerprint = '';\nvar parseOk = false, parseError = '';\nvar hookStyle = '', promptType = '', generationPrompt = '', tags = '';\nvar FEED_FALLBACK_HEADLINES = {\n  pain:        [['STUCK RENTING AGAIN','NO WAY OUT OF THIS TRAP'],['SYSTEM IS RIGGED','THEY PROFIT WHILE YOU STRUGGLE'],['CRUSHED BY DESIGN','THE GAME WAS NEVER FAIR']],\n  credit:      [['BANK SAID NO','YOUR CREDIT SCORE IS A CAGE'],['DENIED AGAIN','THE SYSTEM PUNISHES THE POOR'],['SCORE MEANS NOTHING','BANKS DECIDE WHO WINS']],\n  alternative: [['HIDDEN PATH EXISTS','WHAT THEY NEVER TOLD YOU ABOUT'],['SECRET LOOPHOLE','MOST PEOPLE WILL NEVER KNOW THIS'],['UNDERGROUND METHOD','SKIP THE BANK ENTIRELY']],\n  payment:     [['OVERCHARGED AGAIN','THE REAL COST THEY HIDE FROM YOU'],['PAYMENT TRAP','WHY YOUR MONTHLY BILL KEEPS RISING'],['FEE AFTER FEE','THE PRICE YOU WERE NEVER TOLD']],\n  local:       [['NEIGHBORHOOD GONE','PRICED OUT OF YOUR OWN COMMUNITY'],['DISPLACED FAMILIES','CORPORATE MONEY TOOK YOUR BLOCK'],['LOCAL CRISIS','YOUR AREA IS BEING BOUGHT UP']],\n  market:      [['MARKET CRASHING','THE SQUEEZE IS JUST GETTING STARTED'],['BUBBLE BURST','WHAT THE NUMBERS ARE REALLY SAYING'],['CRISIS COMING','THIS CHART SHOULD TERRIFY YOU']],\n  legacy:      [['BUILD YOUR OWN','GENERATIONAL WEALTH STARTS HERE'],['OWN THE DREAM','FREEDOM IS CLOSER THAN YOU THINK'],['WEALTH TRANSFER','YOUR FAMILY DESERVES THIS PATH']]\n};\nvar FALLBACK_POOLS = {\n  finallysettled: {\n    hooks: ['They don\\'t want you to own a home.','Your rent check is making someone else rich.','The system was never built for you.','Homeownership shouldn\\'t be this hard.','You\\'re paying their mortgage, not yours.','They priced you out on purpose.','Corporate landlords are buying your neighborhood.','The housing market is rigged.'],\n    comments: ['Comment INFO to learn more.','This is the reality they hide from you. Comment INFO.','Your rent builds someone else\\'s wealth. Comment INFO.','We break this system down. Comment INFO to learn how.']\n  },\n  rawfunds: {\n    hooks: ['They need you broke to control you.','Your 9-to-5 was designed to keep you trapped.','Rich people don\\'t work for money.','Your paycheck is keeping you poor.'],\n    comments: ['Comment INFO to learn more.','They don\\'t teach this in school. Comment INFO.']\n  },\n  proxitap: {\n    hooks: ['Airlines don\\'t want you to know this.','You\\'re overpaying for every flight.','This travel hack saves hundreds.','Stop booking flights the wrong way.'],\n    comments: ['Comment INFO to learn more.','Save this for your next trip. Comment INFO.']\n  }\n};\nfunction simpleHash(str) { var hash = 0; for (var i = 0; i < str.length; i++) { hash = ((hash << 5) - hash) + str.charCodeAt(i); hash = hash & hash; } return Math.abs(hash); }\nvar brand = pd.brand || pd.companyName || 'finallysettled';\nvar pool = FALLBACK_POOLS[brand] || FALLBACK_POOLS.finallysettled;\nvar recordId = pd.airtableRecordId || pd.videoId || ('fb_' + Date.now());\nvar seed = simpleHash(recordId);\nvar FILLER_WORDS = ['is','the','a','an','and','to','of','in','for','on','it','this','that','are','was','be','has','have','do','does','not','but','or','with','you','your','they','them','their','my','our','we','he','she','from','at','by','will','can','just','been','being','so','if','no','up','out'];\nfunction makeFingerprint(text) {\n  var t = String(text).toLowerCase().replace(/[^a-z0-9\\s]/g, '').trim();\n  var words = t.split(/\\s+/).filter(function(w) { return w.length > 0 && FILLER_WORDS.indexOf(w) === -1; });\n  return words.join(' ');\n}\nfunction wordOverlap(fp1, fp2) {\n  if (!fp1 || !fp2) return 0;\n  var a = fp1.split(' ');\n  var b = fp2.split(' ');\n  if (a.length === 0 || b.length === 0) return 0;\n  var setB = {};\n  for (var i = 0; i < b.length; i++) { setB[b[i]] = true; }\n  var overlap = 0;\n  for (var j = 0; j < a.length; j++) { if (setB[a[j]]) overlap++; }\n  var union = {};\n  for (var k = 0; k < a.length; k++) { union[a[k]] = true; }\n  for (var m = 0; m < b.length; m++) { union[b[m]] = true; }\n  var unionSize = Object.keys(union).length;\n  return unionSize > 0 ? overlap / unionSize : 0;\n}\nvar recentHeadlines = pd.recentHeadlines || [];\nvar feedType = pd.genFeedType || 'pain';\nvar feedFallbacks = FEED_FALLBACK_HEADLINES[feedType] || FEED_FALLBACK_HEADLINES.pain;\nvar fallbackPair = feedFallbacks[seed % feedFallbacks.length];\nvar FALLBACK_LINE1 = fallbackPair[0];\nvar FALLBACK_LINE2 = fallbackPair[1];\nvar FALLBACK_HOOK = pool.hooks[seed % pool.hooks.length];\nvar FALLBACK_COMMENT = pool.comments[seed % pool.comments.length];\nvar FALLBACK_CAPTION = FALLBACK_HOOK + '\\nThere are other ways.\\n\\n\ud83d\udd17 ' + (pd.ctxCta || 'finallysettled.com \u2014 link in bio') + '  ' + (pd.ctxTags || '#housingcrisis #homeownership #firsttimebuyer');\nfunction splitSentences(text) {\n  var cleaned = String(text).replace(/\\[\\d+\\.?\\d*s\\]\\s*/g, '');\n  var parts = cleaned.replace(/\\n+/g, '. ').split(/(?<=[.!?])\\s+/);\n  var result = [];\n  for (var i = 0; i < parts.length; i++) {\n    var s = parts[i].trim();\n    if (s.length > 15) result.push(s);\n  }\n  return result;\n}\ntry {\n  var txt = '';\n  if (gr && gr.candidates && gr.candidates[0] && gr.candidates[0].content && gr.candidates[0].content.parts && gr.candidates[0].content.parts[0]) {\n    txt = gr.candidates[0].content.parts[0].text || '';\n  }\n  txt = String(txt).replace(/^```json\\s*/i, '').replace(/^```\\s*/i, '').replace(/```$/i, '').trim();\n  var match = txt.match(/\\{[\\s\\S]*\\}/);\n  if (match) {\n    var p = JSON.parse(match[0]);\n    caption = String(p.caption || '');\n    firstComment = String(p.firstComment || '');\n    hookStyle = String(p.hook_style || '');\n    promptType = String(p.prompt_type || '');\n    generationPrompt = String(p.generation_prompt || '');\n    tags = String(p.tags || '');\n    thumbLine1 = String(p.thumbLine1 || '').toUpperCase().trim();\n    thumbLine2 = String(p.thumbLine2 || '').toUpperCase().trim();\n    if (!thumbLine1 && p.thumbTitle) {\n      var oldTitle = String(p.thumbTitle).toUpperCase().trim();\n      var titleWords = oldTitle.split(/\\s+/);\n      if (titleWords.length > 4) {\n        thumbLine1 = titleWords.slice(0, 3).join(' ');\n        thumbLine2 = titleWords.slice(3).join(' ');\n      } else {\n        thumbLine1 = oldTitle;\n        thumbLine2 = '';\n      }\n    }\n    thumbTitle = thumbLine1 + (thumbLine2 ? '\\n' + thumbLine2 : '');\n    var captionLines = caption.split('\\n').filter(function(l) { return l.trim().length > 0; });\n    hook = captionLines.length > 0 ? captionLines[0] : '';\n    if (caption && caption.length >= 20) { parseOk = true; }\n    else { parseError = 'Caption too short (' + (caption ? caption.length : 0) + ' chars)'; }\n  } else { parseError = 'No JSON in Gemini packaging response'; }\n} catch (e) { parseError = 'Packaging parse error: ' + (e && e.message); }\nvar usedFallback = false;\nif (!parseOk) {\n  var excerpt = String(pd.transcriptExcerptUsed || pd.excerpt || '');\n  var sentences = splitSentences(excerpt);\n  if (sentences.length >= 2) {\n    var rawHook = sentences[0];\n    if (rawHook.length > 90) rawHook = rawHook.substring(0, 87) + '...';\n    hook = rawHook;\n    var bodyParts = [];\n    for (var bp = 1; bp < Math.min(sentences.length, 4); bp++) {\n      var sent = sentences[bp];\n      if (sent.length > 100) sent = sent.substring(0, 97) + '...';\n      bodyParts.push(sent);\n    }\n    caption = hook + '\\n' + bodyParts.join(' ') + '\\n\\n\ud83d\udd17 ' + (pd.ctxCta || 'finallysettled.com \u2014 link in bio') + '  ' + (pd.ctxTags || '#housingcrisis #homeownership #firsttimebuyer');\n    if (sentences.length > 3) {\n      firstComment = sentences[3] + ' Comment INFO to learn more.';\n    } else if (sentences.length > 2) {\n      firstComment = sentences[2] + ' Comment INFO to learn more.';\n    } else {\n      firstComment = sentences[1] + ' Comment INFO to learn more.';\n    }\n    generationPrompt = 'FALLBACK: transcript-grounded (Gemini unavailable)';\n  } else {\n    hook = FALLBACK_HOOK;\n    caption = FALLBACK_CAPTION;\n    firstComment = FALLBACK_COMMENT;\n    generationPrompt = 'FALLBACK: no transcript + Gemini failed';\n  }\n  thumbLine1 = FALLBACK_LINE1;\n  thumbLine2 = FALLBACK_LINE2;\n  thumbTitle = FALLBACK_LINE1 + '\\n' + FALLBACK_LINE2;\n  hookStyle = 'bold_statement';\n  promptType = 'fear_loss';\n  usedFallback = true;\n}\nvar headlineFP = makeFingerprint(thumbTitle);\nheadlineFingerprint = headlineFP;\nvar isSimilar = false;\nvar similarTo = '';\nif (!usedFallback && recentHeadlines.length > 0) {\n  for (var h = 0; h < recentHeadlines.length; h++) {\n    var recentFP = makeFingerprint(recentHeadlines[h]);\n    if (headlineFP === recentFP) {\n      isSimilar = true;\n      similarTo = recentHeadlines[h];\n      break;\n    }\n    if (wordOverlap(headlineFP, recentFP) >= 0.70) {\n      isSimilar = true;\n      similarTo = recentHeadlines[h];\n      break;\n    }\n  }\n}\nif (isSimilar) {\n  var altSeed = seed + 1;\n  var altPair = feedFallbacks[altSeed % feedFallbacks.length];\n  thumbLine1 = altPair[0];\n  thumbLine2 = altPair[1];\n  thumbTitle = thumbLine1 + '\\n' + thumbLine2;\n  headlineFingerprint = makeFingerprint(thumbTitle);\n}\nvar ctaUrl = pd.ctxCtaUrl || '';\nvar forbidden = pd.ctxForbidden || [];\nvar brandViolation = '';\nif (!usedFallback && caption) {\n  if (ctaUrl && caption.toLowerCase().indexOf(ctaUrl.toLowerCase()) === -1) {\n    brandViolation = 'Caption missing brand CTA (' + ctaUrl + ')';\n  }\n  var wrongUrls = ['ghostjobindex.com','rawfunds.com','finallysettled.com','proxitap.com'].filter(function(u) { return u.toLowerCase() !== ctaUrl.toLowerCase(); });\n  var allText = (caption + ' ' + firstComment + ' ' + thumbTitle + ' ' + hook).toLowerCase();\n  for (var i = 0; i < wrongUrls.length; i++) {\n    if (allText.indexOf(wrongUrls[i]) !== -1) { brandViolation = (brandViolation ? brandViolation + '; ' : '') + 'Wrong brand URL: ' + wrongUrls[i]; break; }\n  }\n  if (!brandViolation) {\n    for (var j = 0; j < forbidden.length; j++) {\n      if (allText.indexOf(forbidden[j].toLowerCase()) !== -1) { brandViolation = 'Forbidden term: ' + forbidden[j]; break; }\n    }\n  }\n}\nvar startSec = Number(pd.clipStart);\nvar endSec = Number(pd.clipEnd);\nvar clipLen = (!isNaN(startSec) && !isNaN(endSec)) ? Math.round((endSec - startSec) * 10) / 10 : 0;\nvar clipValid = false, validationError = '';\nif (!pd.hasTranscript && !pd.clipSelectorFallback) { validationError = 'no transcript available'; }\nelse if (isNaN(startSec) || isNaN(endSec)) { validationError = 'timing NaN'; }\nelse if (startSec < 0) { validationError = 'start negative'; }\nelse if (endSec <= startSec) { validationError = 'end <= start'; }\nelse if (clipLen > 25) { validationError = 'clip > 25s'; }\nelse if (!usedFallback && !caption) { validationError = 'caption empty'; }\nelse if (!usedFallback && brandViolation) { validationError = 'BRAND: ' + brandViolation; }\nelse { clipValid = true; }\nvar slim = {\n  videoId: pd.videoId, brand: pd.brand, airtableRecordId: pd.airtableRecordId,\n  youtubeUrl: pd.youtubeUrl, videoStorageUrl: pd.videoStorageUrl, videoStored: pd.videoStored,\n  apifyTitle: pd.apifyTitle, thumbnailUrl: pd.thumbnailUrl, hasTranscript: pd.hasTranscript,\n  ctxCta: pd.ctxCta, ctxTags: pd.ctxTags, ctxCtaUrl: pd.ctxCtaUrl,\n  clipStart: startSec, clipEnd: endSec, clipLength: clipLen, clipHook: hook,\n  caption: caption, firstComment: firstComment, thumbTitle: thumbTitle,\n  thumbLine1: thumbLine1, thumbLine2: thumbLine2,\n  headline_fingerprint: headlineFingerprint,\n  clipValid: clipValid, validationError: validationError, brandViolation: brandViolation || '',\n  prompt_type: pd.genPromptType || promptType,\n  hook_style: pd.genHookStyle || hookStyle,\n  clip_emotion: pd.clipEmotion || '',\n  clip_confidence: pd.clipConfidence || 0,\n  generation_prompt: generationPrompt,\n  feed_type: pd.genFeedType || '',\n  feed_name: pd.genFeedName || pd.feedName || '',\n  rss_feed_url: pd.rssFeedUrl || '',\n  used_fallback_feed_mapping: pd.genUsedFallbackFeedMapping || false,\n  company_name: pd.companyName || pd.brand || 'finallysettled',\n  prompt_version: 'v5.1',\n  workflow_version: 'clip-factory-v5.1',\n  clip_reason: pd.clipReason || '',\n  used_fallback_clip: pd.clipSelectorFallback || false,\n  used_fallback_packaging: usedFallback,\n  headline_similar: isSimilar,\n  headline_similar_to: similarTo\n};\nreturn [{ json: slim }];"
+        }
+      },
+      {
+        "id": "89deaf0d-e611-49df-bce1-9b1666c8fcdb",
+        "name": "Publer Upload",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          2500,
+          100
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://app.publer.com/api/v1/media/from-url",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "Bearer REDACTED"
+              },
+              {
+                "name": "Publer-Workspace-Id",
+                "value": "6996bb9c274064adca2a0cbe"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "options": {
+            "response": {
+              "response": {
+                "neverError": true
+              }
+            }
+          },
+          "jsonBody": "={{ JSON.stringify({ media: [{ url: $json.videoStorageUrl || '', name: ($json.brand || 'clip') + '_' + ($json.videoId || 'x') + '.mp4' }] }) }}"
+        }
+      },
+      {
+        "id": "533bcc6e-42c0-45b8-ac27-b1cf481d6ac7",
+        "name": "Wait Processing",
+        "type": "n8n-nodes-base.wait",
+        "typeVersion": 1.1,
+        "position": [
+          2700,
+          100
+        ],
+        "parameters": {
+          "amount": 25,
+          "unit": "seconds",
+          "resume": "timeInterval"
+        }
+      },
+      {
+        "id": "0cd1eb79-7b76-478c-a8eb-30f7b5c8a6f8",
+        "name": "Publer Poll",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          2900,
+          100
+        ],
+        "parameters": {
+          "method": "GET",
+          "url": "={{ 'https://app.publer.com/api/v1/job_status/' + ($json.job_id || 'skip') }}",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "Bearer REDACTED"
+              },
+              {
+                "name": "Publer-Workspace-Id",
+                "value": "6996bb9c274064adca2a0cbe"
+              }
+            ]
+          },
+          "options": {
+            "response": {
+              "response": {
+                "neverError": true
+              }
+            }
+          }
+        }
+      },
+      {
+        "id": "713297f8-505b-4fb2-a354-483c7c940dd6",
+        "name": "Upload to Publer Media",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          3100,
+          100
+        ],
+        "parameters": {
+          "jsCode": "// Upload to Publer Media \u2014 robust upload + poll loop (v2 fix)\n// Fixed: removed JSON.stringify double-encoding, added error capture\n\nvar captionData = $('Merge Thumbnail').first().json;\nvar uploadResp = $('Publer Upload').first().json;\nvar initialPoll = $input.first().json;\n\nvar apiKey = '076da1860b4e9f0292d5d2e7d5ef23ec22843d324bd80071';\nvar workspaceId = '6996bb9c274064adca2a0cbe';\nvar headers = { 'Authorization': 'Bearer-API ' + apiKey, 'Publer-Workspace-Id': workspaceId, 'Content-Type': 'application/json' };\n\nvar videoUrl = captionData.videoStorageUrl || captionData.renderedClipUrl || '';\nvar brand = captionData.brand || 'clip';\nvar videoId = captionData.videoId || 'x';\n\nvar jobId = uploadResp.job_id || '';\nvar mediaId = '';\nvar thumbnails = [];\nvar uploadErrors = 0;\nvar pollIterations = 0;\nvar finalStatus = '';\nvar lastUploadError = '';\nvar lastUploadResponse = '';\n\n// --- Phase 1: Ensure we have a valid job_id ---\nvar uploadRetries = 0;\nvar maxUploadRetries = 6;\n\nwhile (!jobId && uploadRetries < maxUploadRetries) {\n  if (uploadRetries > 0 || (uploadResp.errors && uploadResp.errors.length > 0)) {\n    await new Promise(function(r){ setTimeout(r, 15000); });\n    try {\n      var uploadResult = await this.helpers.httpRequest({\n        method: 'POST',\n        url: 'https://app.publer.com/api/v1/media/from-url',\n        headers: headers,\n        body: { media: [{ url: videoUrl, name: brand + '_' + videoId + '.mp4' }] },\n        timeout: 30000,\n        json: true\n      });\n      lastUploadResponse = JSON.stringify(uploadResult || {});\n      if (uploadResult && uploadResult.job_id) {\n        jobId = uploadResult.job_id;\n      } else if (uploadResult && uploadResult.errors) {\n        lastUploadError = uploadResult.errors.join('; ');\n      }\n    } catch(e) {\n      uploadErrors++;\n      lastUploadError = e.message || String(e);\n    }\n  }\n  if (!jobId) uploadRetries++;\n}\n\n// --- Phase 2: If we already got a complete initial poll, check it ---\nif (jobId && initialPoll && initialPoll.status === 'complete' && initialPoll.payload && initialPoll.payload[0]) {\n  mediaId = initialPoll.payload[0].id || '';\n  thumbnails = initialPoll.payload[0].thumbnails || [];\n  finalStatus = 'complete';\n}\n\n// --- Phase 3: Poll loop until media ID found ---\nvar maxPollIterations = 12;\nvar pollInterval = 10000;\nvar pollErrors = 0;\nvar lastPollError = '';\n\nwhile (!mediaId && jobId && finalStatus !== 'error' && pollIterations < maxPollIterations) {\n  await new Promise(function(r){ setTimeout(r, pollInterval); });\n  try {\n    var resp = await this.helpers.httpRequest({\n      method: 'GET',\n      url: 'https://app.publer.com/api/v1/job_status/' + jobId,\n      headers: { 'Authorization': 'Bearer-API ' + apiKey, 'Publer-Workspace-Id': workspaceId },\n      timeout: 15000,\n      json: true\n    });\n    if (resp && resp.status) { finalStatus = resp.status; }\n    if (resp && resp.status === 'complete' && resp.payload && resp.payload[0]) {\n      mediaId = resp.payload[0].id || '';\n      thumbnails = resp.payload[0].thumbnails || [];\n    }\n  } catch(e) {\n    pollErrors++;\n    lastPollError = e.message || String(e);\n  }\n  pollIterations++;\n}\n\nreturn [{ json: Object.assign({}, captionData, {\n  publerMediaId: mediaId,\n  publerThumbnails: thumbnails,\n  publerJobId: jobId,\n  publerUploadRetries: uploadRetries,\n  publerUploadErrors: uploadErrors,\n  publerPollIterations: pollIterations,\n  publerPollErrors: pollErrors,\n  publerPollStatus: finalStatus,\n  publerLastUploadError: lastUploadError,\n  publerLastUploadResponse: lastUploadResponse,\n  publerLastPollError: lastPollError,\n  publerVideoUrl: videoUrl\n}) }];"
+        }
+      },
+      {
+        "id": "1c186b65-5a04-4bdb-97d8-c74acd3d8f68",
+        "name": "Fetch Queued Video",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          300,
+          100
+        ],
+        "parameters": {
+          "method": "GET",
+          "url": "https://api.airtable.com/v0/apptgY5Qc6HvgZKB8/tbliG4q5QElW9rV5Q",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "Bearer REDACTED"
+              }
+            ]
+          },
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "filterByFormula",
+                "value": "AND({Brand}=\"finallysettled\",{Status}=\"queued\")"
+              },
+              {
+                "name": "sort[0][field]",
+                "value": "Added"
+              },
+              {
+                "name": "sort[0][direction]",
+                "value": "asc"
+              },
+              {
+                "name": "maxRecords",
+                "value": "1"
+              }
+            ]
+          },
+          "options": {}
+        }
+      },
+      {
+        "id": "da55e394-8a56-44c8-ac79-ddbe8f14ad66",
+        "name": "Extract Video Data",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          550,
+          100
+        ],
+        "parameters": {
+          "jsCode": "var records = $input.first().json.records || [];\nif (records.length === 0) throw new Error('No queued videos for finallysettled');\nvar record = records[0];\nvar url = record.fields['YouTube URL'] || '';\nvar videoId = '';\nvar match = url.match(/[?&]v=([a-zA-Z0-9_-]{11})/);\nif (match) videoId = match[1];\nif (!videoId) { match = url.match(/youtu\\.be\\/([a-zA-Z0-9_-]{11})/); if (match) videoId = match[1]; }\nif (!videoId) throw new Error('Could not extract video ID from: ' + url);\nreturn [{ json: {\n  videoId: videoId,\n  videoTitle: record.fields['Notes'] || '',\n  channelTitle: '',\n  thumbnailUrl: 'https://img.youtube.com/vi/' + videoId + '/maxresdefault.jpg',\n  duration: 0,\n  brand: record.fields['Brand'] || 'finallysettled',\n  airtableRecordId: record.id,\n  youtubeUrl: url,\n  feedName: record.fields['Feed Name'] || '',\n  rssFeedUrl: record.fields['RSS Feed URL'] || ''\n}}];"
+        }
+      },
+      {
+        "id": "4f140930-e4b3-4aff-9c73-7f6b135b5e40",
+        "name": "Mark Processing",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          800,
+          100
+        ],
+        "parameters": {
+          "method": "PATCH",
+          "url": "={{ 'https://api.airtable.com/v0/apptgY5Qc6HvgZKB8/tbliG4q5QElW9rV5Q/' + $json.airtableRecordId }}",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "Bearer REDACTED"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\"fields\":{\"Status\":\"processing\"}}",
+          "options": {
+            "response": {
+              "response": {
+                "neverError": true
+              }
+            }
+          }
+        }
+      },
+      {
+        "id": "a0606b88-b4e3-43b1-a74f-b18139dc29be",
+        "name": "Restore Video Data",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1050,
+          100
+        ],
+        "parameters": {
+          "jsCode": "return [{ json: $('Extract Video Data').first().json }];"
+        }
+      },
+      {
+        "id": "1ec23b61-9e81-43d4-abab-8c570cfb2a8e",
+        "name": "Mark Used",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          3500,
+          100
+        ],
+        "parameters": {
+          "method": "PATCH",
+          "url": "={{ 'https://api.airtable.com/v0/apptgY5Qc6HvgZKB8/tbliG4q5QElW9rV5Q/' + $('Upload to Publer Media').first().json.airtableRecordId }}",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "Bearer REDACTED"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\"fields\":{\"Status\":\"used\"}}",
+          "options": {
+            "response": {
+              "response": {
+                "neverError": true
+              }
+            }
+          }
+        }
+      },
+      {
+        "id": "c2d4d6cf-12bc-4089-b103-b7b9c6d2d7a2",
+        "name": "Merge Thumbnail",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2550,
+          300
+        ],
+        "parameters": {
+          "jsCode": "let _clipData = $('Parse LLM Caption').first().json;\nconst videoId = _clipData.videoId;\nconst brand = _clipData.brand;\nconst airtableRecordId = _clipData.airtableRecordId;\nconst youtubeUrl = _clipData.youtubeUrl;\nconst apifyTitle = _clipData.apifyTitle;\nconst thumbnailUrl = _clipData.thumbnailUrl;\nconst caption = _clipData.caption;\nconst firstComment = _clipData.firstComment;\nconst thumbTitle = _clipData.thumbTitle;\nconst clipHook = _clipData.clipHook;\nconst clipStart = _clipData.clipStart;\nconst clipEnd = _clipData.clipEnd;\nconst clipLength = _clipData.clipLength;\nconst ctxCta = _clipData.ctxCta;\nconst ctxTags = _clipData.ctxTags;\nconst originalVideoUrl = _clipData.videoStorageUrl || '';\nconst prompt_type = _clipData.prompt_type || '';\nconst hook_style = _clipData.hook_style || '';\nconst clip_emotion = _clipData.clip_emotion || '';\nconst clip_confidence = _clipData.clip_confidence || 0;\nconst generation_prompt = _clipData.generation_prompt || '';\nconst feed_type = _clipData.feed_type || '';\nconst feed_name = _clipData.feed_name || '';\nconst rss_feed_url = _clipData.rss_feed_url || '';\nconst used_fallback_feed_mapping = _clipData.used_fallback_feed_mapping || false;\nconst company_name = _clipData.company_name || '';\nconst prompt_version = _clipData.prompt_version || '';\nconst workflow_version = _clipData.workflow_version || '';\nconst clip_reason = _clipData.clip_reason || '';\nconst used_fallback_clip = _clipData.used_fallback_clip || false;\nconst used_fallback_packaging = _clipData.used_fallback_packaging || false;\nconst headline_fingerprint = _clipData.headline_fingerprint || '';\nconst thumbLine1 = _clipData.thumbLine1 || '';\nconst thumbLine2 = _clipData.thumbLine2 || '';\nconst headline_similar = _clipData.headline_similar || false;\nconst headline_similar_to = _clipData.headline_similar_to || '';\n_clipData = null;\nlet _pollResult = $input.first().json;\nlet renderedUrl = '';\nlet renderStatus = '';\nlet renderId = '';\ntry {\n  if (_pollResult && _pollResult.response) {\n    renderStatus = _pollResult.response.status || '';\n    renderedUrl = _pollResult.response.url || '';\n    renderId = _pollResult.response.id || '';\n  }\n} catch(e) {}\ntry {\n  if (_pollResult && typeof _pollResult === 'object') {\n    delete _pollResult.timestampedTranscript;\n    delete _pollResult.geminiRequestBody;\n    delete _pollResult.fullTranscript;\n    delete _pollResult.rawApifyResponse;\n  }\n} catch(e) {}\n_pollResult = null;\nif (!renderId) {\n  try {\n    let _rd = $('Shotstack Render').first().json;\n    renderId = (_rd && _rd.response && _rd.response.id) || '';\n    _rd = null;\n  } catch(e) {}\n}\nconst maxIterations = 10;\nconst pollInterval = 30000;\nconst apiKey = 'rLDmE97NESvgKwQu3t5mSdsAYdz6bsd4FtcbNKVO';\nlet iterations = 1;\nlet lastStatus = null;\nlet pollErrors = 0;\nwhile (renderId && renderStatus !== 'done' && renderStatus !== 'failed' && iterations < maxIterations) {\n  await new Promise(function(r){ setTimeout(r, pollInterval); });\n  lastStatus = null;\n  try {\n    lastStatus = await this.helpers.httpRequest({\n      method: 'GET',\n      url: 'https://api.shotstack.io/edit/v1/render/' + renderId,\n      headers: { 'x-api-key': apiKey },\n      timeout: 15000,\n      json: true\n    });\n    if (lastStatus && lastStatus.response) {\n      renderStatus = lastStatus.response.status || renderStatus;\n      renderedUrl = lastStatus.response.url || renderedUrl;\n    }\n  } catch (e) {\n    pollErrors++;\n  }\n  lastStatus = null;\n  iterations++;\n}\nconst renderOk = (renderStatus === 'done' && !!renderedUrl);\nconst renderFailed = (renderStatus === 'failed');\nconst renderTimedOut = (!renderOk && !renderFailed && iterations >= maxIterations);\nreturn [{ json: {\n  videoId, brand, airtableRecordId, youtubeUrl, apifyTitle, thumbnailUrl,\n  caption, firstComment, thumbTitle, clipHook, clipStart, clipEnd, clipLength,\n  ctxCta, ctxTags, originalVideoUrl,\n  videoStorageUrl: renderedUrl, renderedClipUrl: renderedUrl,\n  renderStatus, renderId, pollIterations: iterations, pollErrors,\n  renderOk, renderFailed, renderTimedOut,\n  used_fallback_thumbnail: false,\n  thumbnail_status: renderOk ? 'success' : (renderFailed ? 'failed' : 'skipped'),\n  prompt_type, hook_style, clip_emotion, clip_confidence, generation_prompt,\n  feed_type, feed_name, rss_feed_url, used_fallback_feed_mapping,\n  company_name, prompt_version, workflow_version, clip_reason,\n  used_fallback_clip, used_fallback_packaging,\n  headline_fingerprint, thumbLine1, thumbLine2, headline_similar, headline_similar_to\n}}];"
+        }
+      },
+      {
+        "id": "a997c9e9-40f2-440d-ab54-c060e746415f",
+        "name": "Shotstack Render",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          2350,
+          300
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.shotstack.io/edit/v1/render",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "x-api-key",
+                "value": "REDACTED"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ (() => {\n  const videoUrl = $json.videoStorageUrl;\n  const trimStart = $json.clipStart;\n  const clipLen = $json.clipLength;\n  const rawTitle = String($json.thumbTitle || 'WATCH THIS');\n  const brand = String($json.brand || 'finallysettled').toLowerCase();\n  const brandConfig = {\n    finallysettled: { color: '#00E676', label: 'FINALLY SETTLED' },\n    rawfunds: { color: '#FFD600', label: 'RAWFUNDS' },\n    proxitap: { color: '#FF6D00', label: 'PROXITAP' }\n  };\n  const cfg = brandConfig[brand] || brandConfig.finallysettled;\n  const q = String.fromCharCode(34);\n  const parts = rawTitle.split('\\n');\n  const line1Text = (parts[0] || 'WATCH THIS').replace(/[<>&]/g, '').toUpperCase().trim();\n  const line2Text = (parts[1] || '').replace(/[<>&]/g, '').toUpperCase().trim();\n  const w1 = line1Text.split(/\\s+/).length;\n  const w2 = line2Text ? line2Text.split(/\\s+/).length : 0;\n  const line1Size = w1 <= 2 ? 88 : w1 <= 3 ? 76 : w1 <= 4 ? 66 : 56;\n  const line2Size = w2 <= 3 ? 54 : w2 <= 5 ? 46 : w2 <= 7 ? 40 : 34;\n  const fontImport = '@import url(https://fonts.googleapis.com/css2?family=Anton&display=swap);';\n  const line1Style = 'font-family:Anton,Impact,sans-serif;font-size:' + line1Size + 'px;text-align:center;line-height:1.1;text-transform:uppercase;letter-spacing:2px;font-weight:400;text-shadow:4px 4px 16px rgba(0,0,0,1),0 0 50px rgba(0,0,0,0.8);padding:10px 20px;word-wrap:break-word;overflow:hidden';\n  const line2Style = 'font-family:Anton,Impact,sans-serif;font-size:' + line2Size + 'px;text-align:center;line-height:1.15;text-transform:uppercase;letter-spacing:1px;font-weight:400;text-shadow:3px 3px 12px rgba(0,0,0,1),0 0 40px rgba(0,0,0,0.8);padding:10px 20px;word-wrap:break-word;overflow:hidden;color:#FFFFFF';\n  const words1 = line1Text.split(' ');\n  const firstWord = words1[0] || '';\n  const restWords = words1.slice(1).join(' ');\n  var line1Html;\n  if (restWords) {\n    line1Html = '<style>' + fontImport + '</style><div style=' + q + line1Style + q + '><span style=' + q + 'color:' + cfg.color + q + '>' + firstWord + '</span> <span style=' + q + 'color:#FFFFFF' + q + '>' + restWords + '</span></div>';\n  } else {\n    line1Html = '<style>' + fontImport + '</style><div style=' + q + line1Style + ';color:' + cfg.color + q + '>' + firstWord + '</div>';\n  }\n  var line2Html = '<style>' + fontImport + '</style><div style=' + q + line2Style + q + '>' + line2Text + '</div>';\n  const labelStyle = 'font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#FFFFFF;font-weight:800;letter-spacing:4px;text-shadow:2px 2px 10px rgba(0,0,0,1)';\n  const labelHtml = '<div style=' + q + labelStyle + q + '>' + cfg.label + '</div>';\n  var tracks = [\n    { clips: [{ asset: { type: 'html', html: labelHtml, width: 300, height: 40 }, start: 0, length: clipLen, position: 'bottomLeft', offset: { x: 0.03, y: 0.02 } }] },\n    { clips: [{ asset: { type: 'html', html: line1Html, width: 1000, height: 220 }, start: 0, length: clipLen, position: 'top', offset: { x: 0, y: 0.02 } }] }\n  ];\n  if (line2Text) {\n    tracks.push({ clips: [{ asset: { type: 'html', html: line2Html, width: 1000, height: 220 }, start: 0, length: clipLen, position: 'bottom', offset: { x: 0, y: 0.06 } }] });\n  }\n  tracks.push({ clips: [{ asset: { type: 'video', src: videoUrl, trim: trimStart }, start: 0, length: clipLen, fit: 'contain', position: 'center', offset: { x: 0, y: 0 } }] });\n  return JSON.stringify({\n    timeline: { background: '#000000', tracks: tracks },\n    output: { format: 'mp4', resolution: '1080', aspectRatio: '9:16', fps: 30 }\n  });\n})() }}",
+          "options": {
+            "timeout": 30000,
+            "response": {
+              "response": {
+                "neverError": true
+              }
+            }
+          }
+        },
+        "continueOnFail": true
+      },
+      {
+        "id": "80962b28-efdd-4dd0-808f-485d54523b07",
+        "name": "Wait for Render",
+        "type": "n8n-nodes-base.wait",
+        "typeVersion": 1.1,
+        "position": [
+          2500,
+          300
+        ],
+        "parameters": {
+          "amount": 20,
+          "unit": "seconds"
+        }
+      },
+      {
+        "id": "4edd2175-92f3-4bc3-a2af-d4332a0069b8",
+        "name": "Shotstack Poll",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          2650,
+          300
+        ],
+        "parameters": {
+          "method": "GET",
+          "url": "=https://api.shotstack.io/edit/v1/render/{{ $json.response.id }}",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "x-api-key",
+                "value": "REDACTED"
+              }
+            ]
+          },
+          "options": {
+            "timeout": 15000
+          }
+        },
+        "continueOnFail": true
+      },
+      {
+        "id": "fd14ee4d-464b-4ba3-8b05-6e58b06b46a1",
+        "name": "Check Video OK",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          1650,
+          100
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict"
+            },
+            "conditions": [
+              {
+                "id": "check-stored",
+                "leftValue": "={{ $json.videoStored }}",
+                "rightValue": true,
+                "operator": {
+                  "type": "boolean",
+                  "operation": "equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          }
+        }
+      },
+      {
+        "id": "00530c11-1cac-412b-b138-9fec1b7c10ac",
+        "name": "Mark Failed",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1850,
+          300
+        ],
+        "parameters": {
+          "method": "PATCH",
+          "url": "=https://api.airtable.com/v0/apptgY5Qc6HvgZKB8/tbliG4q5QElW9rV5Q/{{ $json.airtableRecordId }}",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "Bearer REDACTED"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify({ fields: { Status: 'failed' } }) }}",
+          "options": {
+            "response": {
+              "response": {
+                "neverError": true
+              }
+            }
+          }
+        }
+      },
+      {
+        "id": "8155caa8-baac-4956-a3b6-d615c9be9bab",
+        "name": "Fetch Transcript",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1780,
+          260
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "=https://api.apify.com/v2/acts/pintostudio~youtube-transcript-scraper/run-sync-get-dataset-items?token=REDACTED",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify({ videoUrl: $json.youtubeUrl }) }}",
+          "options": {
+            "timeout": 120000,
+            "response": {
+              "response": {
+                "neverError": true
+              }
+            }
+          }
+        }
+      },
+      {
+        "id": "4443bbb9-18cf-43dd-8c8e-a065c06a8087",
+        "name": "Merge Transcript",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1920,
+          260
+        ],
+        "parameters": {
+          "jsCode": "var videoData = $('Build Video Result').first().json;\nvar transcriptResp = $input.first().json;\nvar segments = [];\ntry {\n  if (Array.isArray(transcriptResp)) {\n    if (transcriptResp.length > 0 && transcriptResp[0] && Array.isArray(transcriptResp[0].data)) segments = transcriptResp[0].data;\n    else if (transcriptResp.length > 0 && transcriptResp[0] && transcriptResp[0].start !== undefined) segments = transcriptResp;\n  } else if (transcriptResp && Array.isArray(transcriptResp.data)) segments = transcriptResp.data;\n} catch(e) {}\nvar lines = [];\nfor (var i = 0; i < segments.length; i++) {\n  var s = segments[i] || {};\n  var st = parseFloat(s.start !== undefined ? s.start : (s.offset !== undefined ? s.offset : 0));\n  if (isNaN(st)) st = 0;\n  var tx = String(s.text || '').replace(/\\s+/g, ' ').trim();\n  if (tx) lines.push('[' + st.toFixed(1) + 's] ' + tx);\n}\nreturn [{ json: Object.assign({}, videoData, { timestampedTranscript: lines.join('\\n'), transcriptSegmentCount: lines.length, hasTranscript: lines.length > 0 }) }];"
+        }
+      },
+      {
+        "id": "4495f7c1-1a33-41f3-a04a-a9c413979144",
+        "name": "Validate Clip",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          2250,
+          100
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "validate-clip",
+                "leftValue": "={{ $json.clipValid }}",
+                "rightValue": true,
+                "operator": {
+                  "type": "boolean",
+                  "operation": "equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          }
+        }
+      },
+      {
+        "id": "8b3a89d1-1aec-40f5-9b5a-6b276de649bf",
+        "name": "Check Clip Rendered",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          2700,
+          300
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "check-render",
+                "leftValue": "={{ $json.renderOk }}",
+                "rightValue": true,
+                "operator": {
+                  "type": "boolean",
+                  "operation": "equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          }
+        }
+      },
+      {
+        "id": "clip-selector-prompt-1",
+        "name": "Build Clip Selector Prompt",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1850,
+          100
+        ],
+        "parameters": {
+          "jsCode": "var data = $input.first().json;\nvar brand = data.brand || 'finallysettled';\nvar videoTitle = data.apifyTitle || data.videoTitle || '';\nvar transcript = data.timestampedTranscript || '';\nvar brands = {\n  rawfunds: { name: 'RawFunds', niche: 'passive income, side hustles, financial freedom', forbidden: ['ghostjobindex.com','ghostjobindex','ghost jobs','ghost job','finallysettled.com','proxitap.com','housing crisis','mortgage rates','corporate landlords','flight deals','airport tips','aviation'], preferTopics: ['money','income','wealth','investing','side hustle','financial freedom','passive income'] },\n  finallysettled: { name: 'Finally Settled', niche: 'housing crisis, mortgage rates, private equity real estate, corporate landlords, homeownership, affordability', forbidden: ['ghostjobindex.com','ghostjobindex','ghost jobs','ghost job','rawfunds.com','proxitap.com','layoffs','layoff','hiring freeze','job market','passive income','side hustle','flight deals','airport tips','aviation'], preferTopics: ['money','housing','frustration','ownership','affordability','rent','mortgage','home','buying','landlord','credit','bank'] },\n  proxitap: { name: 'ProxiTap', niche: 'travel hacks, airport tips, flight deals, travel technology', forbidden: ['ghostjobindex.com','ghostjobindex','ghost jobs','ghost job','rawfunds.com','finallysettled.com','layoffs','layoff','hiring freeze','passive income','side hustle','housing crisis','mortgage rates','corporate landlords'], preferTopics: ['travel','flight','airport','booking','hotel','deals','miles','points','savings'] }\n};\nvar ctx = brands[brand] || brands.finallysettled;\nvar truncated = transcript.length > 8000 ? transcript.substring(0, 8000) + ' [TRUNCATED]' : transcript;\nvar forbiddenLine = '';\nif (ctx.forbidden && ctx.forbidden.length) { forbiddenLine = 'SKIP any segment that mentions these forbidden terms: ' + ctx.forbidden.join(', ') + '.'; }\nvar lines = [];\nlines.push('You are a clip selection specialist for ' + ctx.name + ', a ' + ctx.niche + ' brand.');\nlines.push('');\nlines.push('YOUR ONLY JOB: Pick the single best 25-second clip from this transcript.');\nlines.push('DO NOT write captions, hooks, or comments. ONLY select the clip.');\nlines.push('');\nlines.push('SOURCE VIDEO TITLE: ' + JSON.stringify(videoTitle));\nlines.push('');\nlines.push('TIMESTAMPED TRANSCRIPT (numbers in brackets = start seconds):');\nlines.push(truncated);\nlines.push('');\nlines.push('CLIP SELECTION RULES:');\nlines.push('- Duration MUST be > 0 and <= 25 seconds.');\nlines.push('- start_seconds must match a bracket timestamp.');\nlines.push('- end_seconds must land on a clean sentence end.');\nlines.push('- Clip MUST be understandable without prior context.');\nlines.push('- PREFER: strong emotional/financial statements, topics about ' + ctx.preferTopics.join(', ') + ', surprising stats, daily pain points, contrarian takes.');\nlines.push('- First 3 seconds must hook attention.');\nif (forbiddenLine) { lines.push('- ' + forbiddenLine); }\nlines.push('');\nlines.push('RESPOND ONLY WITH RAW JSON:');\nlines.push('{\"start_seconds\":<number>,\"end_seconds\":<number>,\"clip_reason\":\"<1-2 sentences>\",\"clip_emotion\":\"<pain|curiosity|aspiration|authority|controversy>\",\"clip_confidence\":<0.0-1.0>,\"transcript_excerpt_used\":\"<exact text>\"}');\nvar prompt = lines.join('\\n');\nvar reqBody = JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.4, maxOutputTokens: 1000, responseMimeType: 'application/json' } });\nreturn [{ json: Object.assign({}, data, { clipSelectorRequestBody: reqBody, stageA: true }) }];"
+        }
+      },
+      {
+        "id": "clip-selector-api-1",
+        "name": "Clip Selector API",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          2050,
+          100
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=REDACTED",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ $json.clipSelectorRequestBody }}",
+          "options": {
+            "timeout": 60000
+          }
+        },
+        "onError": "continueRegularOutput",
+        "retryOnFail": true,
+        "maxTries": 4,
+        "waitBetweenTries": 8000
+      },
+      {
+        "id": "parse-clip-1",
+        "name": "Parse Clip Selection",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2250,
+          100
+        ],
+        "parameters": {
+          "jsCode": "var pd = $('Build Clip Selector Prompt').first().json;\nvar gr = $input.first().json;\nvar startSec = NaN, endSec = NaN;\nvar clipReason = '', clipEmotion = '', clipConfidence = 0, excerptUsed = '';\nvar selectorOk = false, selectorError = '';\ntry {\n  var txt = '';\n  if (gr && gr.candidates && gr.candidates[0] && gr.candidates[0].content && gr.candidates[0].content.parts && gr.candidates[0].content.parts[0]) {\n    txt = gr.candidates[0].content.parts[0].text || '';\n  }\n  txt = String(txt).replace(/^```json\\s*/i, '').replace(/^```\\s*/i, '').replace(/```$/i, '').trim();\n  var match = txt.match(/\\{[\\s\\S]*\\}/);\n  if (match) {\n    var p = JSON.parse(match[0]);\n    startSec = Number(p.start_seconds);\n    endSec = Number(p.end_seconds);\n    clipReason = String(p.clip_reason || '');\n    clipEmotion = String(p.clip_emotion || '').toLowerCase();\n    clipConfidence = Number(p.clip_confidence) || 0;\n    excerptUsed = String(p.transcript_excerpt_used || '');\n    var validEmotions = ['pain','curiosity','aspiration','authority','controversy'];\n    if (validEmotions.indexOf(clipEmotion) === -1) clipEmotion = 'pain';\n    if (clipConfidence < 0) clipConfidence = 0;\n    if (clipConfidence > 1) clipConfidence = 1;\n    var HARD_CAP = 25;\n    if (!isNaN(startSec) && !isNaN(endSec) && endSec > startSec && startSec >= 0) {\n      if (endSec - startSec > HARD_CAP) endSec = Math.round((startSec + HARD_CAP) * 10) / 10;\n      selectorOk = true;\n    } else { selectorError = 'Invalid timing: start=' + startSec + ' end=' + endSec; }\n  } else { selectorError = 'No JSON in clip selector response'; }\n} catch (e) { selectorError = 'Clip selector parse error: ' + (e && e.message); }\nreturn [{ json: Object.assign({}, pd, { clipStart: startSec, clipEnd: endSec, clipReason: clipReason, clipEmotion: clipEmotion, clipConfidence: clipConfidence, transcriptExcerptUsed: excerptUsed, clipSelectorOk: selectorOk, clipSelectorError: selectorError }) }];"
+        }
+      },
+      {
+        "id": "check-clip-1",
+        "name": "Check Clip Selection",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          2450,
+          100
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "check-clip-sel",
+                "leftValue": "={{ $json.clipSelectorOk }}",
+                "rightValue": true,
+                "operator": {
+                  "type": "boolean",
+                  "operation": "equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          }
+        }
+      },
+      {
+        "id": "clip-fallback-1",
+        "name": "Clip Fallback",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2650,
+          300
+        ],
+        "parameters": {
+          "jsCode": "var data = $input.first().json;\nvar transcript = data.timestampedTranscript || '';\nvar fallbackExcerpt = transcript.length > 500 ? transcript.substring(0, 500) : transcript;\nreturn [{ json: Object.assign({}, data, { clipStart: 0, clipEnd: 25, clipReason: 'FALLBACK: Clip selector failed (' + (data.clipSelectorError || 'unknown') + '). Using first 25s.', clipEmotion: 'pain', clipConfidence: 0, transcriptExcerptUsed: fallbackExcerpt, clipSelectorOk: false, clipSelectorFallback: true }) }];"
+        }
+      },
+      {
+        "id": "render-fallback-1",
+        "name": "Render Fallback",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2850,
+          500
+        ],
+        "parameters": {
+          "jsCode": "var data = $input.first().json;\ndata.videoStorageUrl = data.originalVideoUrl || data.videoStorageUrl || '';\ndata.hctiThumbnailUrl = '';\ndata.used_fallback_thumbnail = true;\ndata.thumbnail_status = data.renderFailed ? 'failed' : (data.renderTimedOut ? 'skipped' : 'failed');\nreturn [{ json: data }];"
+        }
+      },
+      {
+        "id": "save-metadata-1",
+        "name": "Save Metadata",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          3700,
+          100
+        ],
+        "parameters": {
+          "method": "PATCH",
+          "url": "={{ 'https://api.airtable.com/v0/apptgY5Qc6HvgZKB8/tbliG4q5QElW9rV5Q/' + $('Upload to Publer Media').first().json.airtableRecordId }}",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "Bearer REDACTED"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ (() => {\n  const d = $('Upload to Publer Media').first().json;\n  const fields = {};\n  if (d.prompt_type) fields['Prompt Type'] = String(d.prompt_type);\n  if (d.hook_style) fields['Hook Style'] = String(d.hook_style);\n  if (d.clip_emotion) fields['Clip Emotion'] = String(d.clip_emotion);\n  if (typeof d.clip_confidence === 'number') fields['Clip Confidence'] = d.clip_confidence;\n  if (d.clip_reason) fields['Clip Reason'] = String(d.clip_reason).substring(0, 1000);\n  if (d.feed_type) fields['Feed Type'] = String(d.feed_type);\n  if (d.feed_name) fields['Feed Name'] = String(d.feed_name);\n  if (d.rss_feed_url) fields['RSS Feed URL'] = String(d.rss_feed_url);\n  if (d.company_name) fields['Company Name'] = String(d.company_name);\n  if (d.prompt_version) fields['Prompt Version'] = String(d.prompt_version);\n  if (d.workflow_version) fields['Workflow Version'] = String(d.workflow_version);\n  fields['Used Fallback Clip'] = d.used_fallback_clip === true;\n  fields['Used Fallback Packaging'] = d.used_fallback_packaging === true;\n  fields['Used Fallback Thumbnail'] = d.used_fallback_thumbnail === true;\n  fields['Used Fallback Feed Mapping'] = d.used_fallback_feed_mapping === true;\n  if (d.thumbnail_status) fields['Thumbnail Status'] = String(d.thumbnail_status);\n  if (d.caption) fields['Caption'] = String(d.caption).substring(0, 5000);\n  if (d.firstComment) fields['First Comment'] = String(d.firstComment).substring(0, 2000);\n  if (d.thumbTitle) fields['Thumb Title'] = String(d.thumbTitle).replace(/\\n/g, ' / ').substring(0, 500);\n  if (typeof d.clipStart === 'number' && !isNaN(d.clipStart)) fields['Clip Start'] = d.clipStart;\n  if (typeof d.clipEnd === 'number' && !isNaN(d.clipEnd)) fields['Clip End'] = d.clipEnd;\n  if (d.headline_fingerprint) fields['Headline Fingerprint'] = String(d.headline_fingerprint).substring(0, 500);\n  return JSON.stringify({ fields: fields });\n})() }}",
+          "options": {
+            "response": {
+              "response": {
+                "neverError": true
+              }
+            }
+          }
+        },
+        "onError": "continueRegularOutput"
+      },
+      {
+        "id": "42277043-d6cf-44fc-a40b-e13213a5c372",
+        "name": "Retry Next Video",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2050,
+          400
+        ],
+        "parameters": {
+          "jsCode": "// After a failed download, check if we should try the next queued video.\n// Max 3 retries per execution to avoid infinite loops.\nconst staticData = $getWorkflowStaticData('global');\nconst execId = $execution.id;\nconst key = 'retryCount_' + execId;\nconst count = (staticData[key] || 0) + 1;\nstaticData[key] = count;\n\n// Clean up stale keys from previous executions\nfor (const k of Object.keys(staticData)) {\n  if (k.startsWith('retryCount_') && k !== key) {\n    delete staticData[k];\n  }\n}\n\nif (count >= 3) {\n  // Tried 3 videos already, stop this execution\n  return [];\n}\n\n// Pass through to fetch the next queued video\nreturn [{ json: { retry: count, previousVideoFailed: true } }];\n"
+        }
+      },
+      {
+        "id": "67c67c33-86d7-4f34-ad12-9f4a0203363d",
+        "name": "Apify Download & Store",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          2180,
+          460
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "=https://api.apify.com/v2/acts/api-ninja~youtube-video-downloader/runs?token=REDACTED",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify({ urls: [$json.youtubeUrl], format: '1080', ttl: '1d' }) }}",
+          "options": {
+            "timeout": 30000,
+            "response": {
+              "response": {
+                "neverError": true
+              }
+            }
+          }
+        }
+      },
+      {
+        "id": "8753f116-4823-4985-9c3a-271fec3ec2ce",
+        "name": "Get Download Results",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          2620,
+          460
+        ],
+        "parameters": {
+          "method": "GET",
+          "url": "=https://api.apify.com/v2/datasets/{{ $('Check Apify Status').first().json.data.defaultDatasetId }}/items?token=REDACTED&clean=true",
+          "options": {
+            "timeout": 30000,
+            "response": {
+              "response": {
+                "neverError": true
+              }
+            }
+          }
+        }
+      },
+      {
+        "id": "42df7b6a-587c-4354-bec6-7006222a6861",
+        "name": "Extract Run Info",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2300,
+          460
+        ],
+        "parameters": {
+          "jsCode": "const input = $input.first().json;\nlet runId = '';\nlet datasetId = '';\nlet status = '';\ntry {\n  if (input && input.data) {\n    runId = input.data.id || '';\n    datasetId = input.data.defaultDatasetId || '';\n    status = input.data.status || '';\n  }\n} catch(e) {}\nconst TERMINAL = ['SUCCEEDED','FAILED','ABORTED','TIMED-OUT','TIMED_OUT'];\nreturn [{ json: { runId, datasetId, status, isDone: TERMINAL.includes(status), succeeded: status === 'SUCCEEDED' } }];"
+        }
+      },
+      {
+        "id": "0f796a85-78e8-4b97-a63f-fd7e748cc564",
+        "name": "Wait for Apify",
+        "type": "n8n-nodes-base.wait",
+        "typeVersion": 1.1,
+        "position": [
+          2400,
+          560
+        ],
+        "parameters": {
+          "amount": 15,
+          "unit": "seconds"
+        }
+      },
+      {
+        "id": "93c92c68-9b83-4c20-92a1-a85f2930ffbb",
+        "name": "Check Apify Status",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          2520,
+          560
+        ],
+        "parameters": {
+          "method": "GET",
+          "url": "=https://api.apify.com/v2/actor-runs/{{ $('Extract Run Info').first().json.runId }}?token=REDACTED",
+          "options": {
+            "timeout": 15000,
+            "response": {
+              "response": {
+                "neverError": true
+              }
+            }
+          }
+        }
+      },
+      {
+        "id": "c6f834ff-cc10-4c8d-8252-aba0c1cbc4cc",
+        "name": "Is Apify Done?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          2640,
+          560
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true
+            },
+            "combinator": "and",
+            "conditions": [
+              {
+                "id": "1",
+                "leftValue": "={{ $json.data.status }}",
+                "rightValue": "READY",
+                "operator": {
+                  "type": "string",
+                  "operation": "notEquals"
+                }
+              },
+              {
+                "id": "2",
+                "leftValue": "={{ $json.data.status }}",
+                "rightValue": "RUNNING",
+                "operator": {
+                  "type": "string",
+                  "operation": "notEquals"
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "a6e85ddc-e5a7-4e8c-bb3c-448a69220b80",
+        "name": "Wait Before Caption",
+        "type": "n8n-nodes-base.wait",
+        "typeVersion": 1.1,
+        "position": [
+          2750,
+          100
+        ],
+        "parameters": {
+          "amount": 10,
+          "unit": "seconds"
+        }
+      }
+    ],
+    "connections": {
+      "Build Packaging Prompt": {
+        "main": [
+          [
+            {
+              "node": "Gemini Caption API",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Gemini Caption API": {
+        "main": [
+          [
+            {
+              "node": "Parse LLM Caption",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Publer Upload": {
+        "main": [
+          [
+            {
+              "node": "Wait Processing",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Wait Processing": {
+        "main": [
+          [
+            {
+              "node": "Publer Poll",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Publer Poll": {
+        "main": [
+          [
+            {
+              "node": "Upload to Publer Media",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Upload to Publer Media": {
+        "main": [
+          [
+            {
+              "node": "Create Publer Draft",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Every 48 Minutes": {
+        "main": [
+          [
+            {
+              "node": "Fetch Queued Video",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Manual Trigger": {
+        "main": [
+          [
+            {
+              "node": "Fetch Queued Video",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Test Webhook": {
+        "main": [
+          [
+            {
+              "node": "Fetch Queued Video",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Fetch Queued Video": {
+        "main": [
+          [
+            {
+              "node": "Extract Video Data",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Extract Video Data": {
+        "main": [
+          [
+            {
+              "node": "Mark Processing",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Mark Processing": {
+        "main": [
+          [
+            {
+              "node": "Restore Video Data",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Create Publer Draft": {
+        "main": [
+          [
+            {
+              "node": "Mark Used",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Shotstack Render": {
+        "main": [
+          [
+            {
+              "node": "Wait for Render",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Wait for Render": {
+        "main": [
+          [
+            {
+              "node": "Shotstack Poll",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Shotstack Poll": {
+        "main": [
+          [
+            {
+              "node": "Merge Thumbnail",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build Video Result": {
+        "main": [
+          [
+            {
+              "node": "Check Video OK",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Check Video OK": {
+        "main": [
+          [
+            {
+              "node": "Fetch Transcript",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Mark Failed",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Fetch Transcript": {
+        "main": [
+          [
+            {
+              "node": "Merge Transcript",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Parse LLM Caption": {
+        "main": [
+          [
+            {
+              "node": "Validate Clip",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Validate Clip": {
+        "main": [
+          [
+            {
+              "node": "Shotstack Render",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Mark Failed",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Merge Thumbnail": {
+        "main": [
+          [
+            {
+              "node": "Check Clip Rendered",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Check Clip Rendered": {
+        "main": [
+          [
+            {
+              "node": "Publer Upload",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Render Fallback",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build Clip Selector Prompt": {
+        "main": [
+          [
+            {
+              "node": "Clip Selector API",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Clip Selector API": {
+        "main": [
+          [
+            {
+              "node": "Parse Clip Selection",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Parse Clip Selection": {
+        "main": [
+          [
+            {
+              "node": "Check Clip Selection",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Check Clip Selection": {
+        "main": [
+          [
+            {
+              "node": "Wait Before Caption",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Clip Fallback",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Merge Transcript": {
+        "main": [
+          [
+            {
+              "node": "Build Clip Selector Prompt",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Render Fallback": {
+        "main": [
+          [
+            {
+              "node": "Publer Upload",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Mark Used": {
+        "main": [
+          [
+            {
+              "node": "Save Metadata",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Mark Failed": {
+        "main": [
+          [
+            {
+              "node": "Retry Next Video",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Retry Next Video": {
+        "main": [
+          [
+            {
+              "node": "Fetch Queued Video",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Restore Video Data": {
+        "main": [
+          [
+            {
+              "node": "Apify Download & Store",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get Download Results": {
+        "main": [
+          [
+            {
+              "node": "Build Video Result",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Apify Download & Store": {
+        "main": [
+          [
+            {
+              "node": "Extract Run Info",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Extract Run Info": {
+        "main": [
+          [
+            {
+              "node": "Wait for Apify",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Wait for Apify": {
+        "main": [
+          [
+            {
+              "node": "Check Apify Status",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Check Apify Status": {
+        "main": [
+          [
+            {
+              "node": "Is Apify Done?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Is Apify Done?": {
+        "main": [
+          [
+            {
+              "node": "Get Download Results",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Wait for Apify",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Wait Before Caption": {
+        "main": [
+          [
+            {
+              "node": "Build Packaging Prompt",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Clip Fallback": {
+        "main": [
+          [
+            {
+              "node": "Wait Before Caption",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Raw Funds",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-04-15T02:18:22.706Z",
+        "id": 796,
+        "workflowId": "K63Ut64YfW8Ll6BF",
+        "versionId": "97d1d4f4-7416-4325-95fa-b6b0da89a1db",
+        "event": "activated",
+        "userId": "d42639c1-6ec3-44cd-b664-d9c56171bec3"
+      }
+    ]
+  }
+}
